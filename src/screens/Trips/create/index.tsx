@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, ScrollView } from "react-native";
 import { useTripCreateLogic } from "./logic";
 import { styles } from "./styles";
 import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function TripCreateScreen({ navigation }: any) {
   const { form, set, submit, drivers, vehicles } =
     useTripCreateLogic(navigation);
 
+  const [show, setShow] = useState(false);
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Create Trip</Text>
@@ -48,6 +50,33 @@ export default function TripCreateScreen({ navigation }: any) {
         onChangeText={(v) => set("mileage", Number(v))}
       />
 
+      <TouchableOpacity onPress={() => setShow(true)}>
+      <Text style={styles.label}>Trip Date</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Trip Date"
+          editable={false}
+          value={form.trip_date ?? ""}
+        />
+      </TouchableOpacity>
+
+      {show && (
+        <DateTimePicker
+          value={form.trip_date ? new Date(form.trip_date) : new Date()}
+          mode="date"
+          display="calendar"
+          onChange={(e, date) => {
+            setShow(false);
+            if (!date) return;
+
+            // Convert to YYYY-MM-DD
+            const formatted = date.toISOString().split("T")[0];
+
+            set("trip_date", formatted);
+          }}
+        />
+      )}
+
       {/* VEHICLE */}
       <Text style={styles.label}>Vehicle</Text>
       <Picker
@@ -56,11 +85,7 @@ export default function TripCreateScreen({ navigation }: any) {
       >
         <Picker.Item label="Select vehicle" value={0} />
         {vehicles.map((v) => (
-          <Picker.Item
-            key={v.id}
-            label={v.registration_number}
-            value={v.id}
-          />
+          <Picker.Item key={v.id} label={v.registration_number} value={v.id} />
         ))}
       </Picker>
 

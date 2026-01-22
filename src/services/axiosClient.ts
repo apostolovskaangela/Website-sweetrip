@@ -30,11 +30,23 @@ const axiosClient = axios.create({
 axiosClient.interceptors.request.use(
     async (config) => {
     try {
-
       const token = await AsyncStorage.getItem('AUTH_TOKEN');
       console.log('🔐 AUTH_TOKEN from storage:', token);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      
+      // For FormData requests, remove Content-Type header to let axios set it with boundary
+      // Check if data is FormData (works in both web and React Native)
+      const isFormData = config.data instanceof FormData || 
+                        (typeof FormData !== 'undefined' && config.data?.constructor?.name === 'FormData') ||
+                        (config.data && typeof config.data.append === 'function');
+      
+      if (isFormData) {
+        delete config.headers['Content-Type'];
+        if (__DEV__) {
+          console.log('📎 FormData detected, removed Content-Type header');
+        }
       }
     } catch (error) {
       console.error('Error getting token:', error);
@@ -67,7 +79,7 @@ axiosClient.interceptors.response.use(
       console.error('\n⚠️ TROUBLESHOOTING NETWORK ERROR:');
       console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.error('1. ✅ Check if backend is running:');
-      console.error('   Open browser: http://172.20.10.3:8000/api/login');
+      console.error('   Open browser: http://192.168.1.104:8000/api/login');
       console.error('   (Should show error, but confirms server is reachable)');
       console.error('');
       console.error('2. ✅ Laravel server must bind to 0.0.0.0 (not 127.0.0.1):');
@@ -79,12 +91,12 @@ axiosClient.interceptors.response.use(
       console.error('   Mac/Linux: Check firewall rules');
       console.error('');
       console.error('4. ✅ Verify IP address:');
-      console.error('   Current IP: 172.20.10.3');
+      console.error('   Current IP: 192.168.1.104');
       console.error('   Run "ipconfig" (Windows) or "ifconfig" (Mac/Linux) to verify');
       console.error('');
       console.error('5. ✅ Network connectivity:');
       console.error('   Device/emulator must be on same network as backend');
-      console.error('   Try ping 172.20.10.3 from device/emulator');
+      console.error('   Try ping 192.168.1.104 from device/emulator');
       console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     }
 

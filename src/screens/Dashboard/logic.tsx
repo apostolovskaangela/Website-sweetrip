@@ -1,20 +1,34 @@
-// For now, no complex state/logic is needed; placeholder for future state management
-import { useState } from "react";
+import { dashboardApi } from "@/src/services/api";
+import { useEffect, useState } from "react";
 
 export const useDashboardLogic = () => {
-  const [trips, setTrips] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
+  const [stats, setStats] = useState<any>(null);
+  const [recentTrips, setRecentTrips] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Example: fetch trips from API
-  const fetchTrips = async () => {
-    // fetch logic
+  const fetchDashboard = async () => {
+    try {
+      const data = await dashboardApi.getDashboard();
+
+      setStats(data.stats);
+      setRecentTrips(data.recent_trips);
+      setVehicles(data.vehicles);
+    } catch (e) {
+      console.error("Dashboard API failed", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
   return {
-    trips,
+    stats,
+    recentTrips,
     vehicles,
-    fetchTrips,
-    setTrips,
-    setVehicles,
+    loading,
   };
 };

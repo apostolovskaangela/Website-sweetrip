@@ -1,3 +1,4 @@
+import { RoleFactory } from "@/src/roles";
 import { authApi, tripsApi } from "@/src/services/api";
 import { testConnection } from "@/src/utils/testConnection";
 import { useEffect, useState } from "react";
@@ -36,7 +37,9 @@ export function useTripsListLogic() {
   const loadUser = async () => {
     try {
       const user = await authApi.getUser();
-      setCanCreate(user.roles?.some(role => ["admin", "manager"].includes(role)) || false);
+      // Use RoleFactory to check permissions
+      const roleHandler = RoleFactory.createFromUser(user);
+      setCanCreate(roleHandler?.canCreateTrip() ?? false);
     } catch (error: any) {
       console.error("Error loading user:", error);
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {

@@ -16,4 +16,8 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
   submitText: { color: "#fff", textAlign: "center", fontWeight: "600" },
+  label: {
+    color: 'gray',
+    paddingBottom: 2
+  }
 });

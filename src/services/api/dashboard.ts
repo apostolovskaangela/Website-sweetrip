@@ -1,4 +1,8 @@
-import axiosClient from '../axiosClient';
+import axiosClient from "../axiosClient";
+
+// ------------------
+// Types
+// ------------------
 
 export interface DashboardStats {
   active_trips: number;
@@ -9,11 +13,36 @@ export interface DashboardStats {
   completed_trips_last_month: number;
 }
 
+export interface Trip {
+  id: number;
+  trip_number: string;
+  trip_date: string;
+  status: string;
+  status_label: string;
+  destination_from: string;
+  destination_to: string;
+  mileage: number;
+  driver?: {
+    id: number;
+    name: string;
+  };
+  vehicle?: {
+    id: number;
+    registration_number: string;
+  };
+}
+
+export interface Vehicle {
+  id: number;
+  registration_number: string;
+  is_active: boolean;
+}
+
 export interface DashboardResponse {
   stats: DashboardStats;
   drivers: any[];
-  trips: any[];
-  vehicles: any[];
+  recent_trips: Trip[];
+  vehicles: Vehicle[];
 }
 
 export interface DriverDashboardResponse {
@@ -22,7 +51,7 @@ export interface DriverDashboardResponse {
     completed_trips: number;
     pending_trips: number;
   };
-  trips: any[];
+  trips: Trip[];
   pagination: {
     current_page: number;
     last_page: number;
@@ -31,16 +60,18 @@ export interface DriverDashboardResponse {
   };
 }
 
+// ------------------
+// API
+// ------------------
+
 export const dashboardApi = {
   getDashboard: async (): Promise<DashboardResponse> => {
-    const response = await axiosClient.get<DashboardResponse>('/dashboard');
-    return response.data;
+    const res = await axiosClient.get("/dashboard");
+    return res.data;
   },
 
   getDriverDashboard: async (): Promise<DriverDashboardResponse> => {
-    const response = await axiosClient.get<DriverDashboardResponse>('/driver/dashboard');
+    const response = await axiosClient.get<DriverDashboardResponse>("/driver/dashboard");
     return response.data;
   },
 };
-
-
