@@ -1,8 +1,8 @@
 import Login from "@/src/components/Login";
-import Signup from "@/src/components/SignUp";
 import { AuthContext, AuthProvider } from "@/src/context/AuthContext";
 import { MainNavigator } from "@/src/navigation/MainNavigator";
 import { RootStackParamList } from "@/src/navigation/types";
+import Welcome from "@/src/screens/Welcome";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { useContext } from "react";
@@ -32,8 +32,8 @@ function AppNavigator() {
           <Stack.Screen name="Dashboard" component={MainNavigator} />
         ) : (
           <>
+            <Stack.Screen name="Welcome" component={Welcome} />
             <Stack.Screen name="Login" component={Login} />
-            <Stack.Screen name="Signup" component={Signup} />
           </>
         )}
       </Stack.Navigator>

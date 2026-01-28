@@ -16,7 +16,6 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Auth: {
         screens: {
           SignIn: "signin",
-          SignUp: "signup",
         },
       },
     },

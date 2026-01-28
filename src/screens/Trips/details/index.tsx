@@ -1,3 +1,190 @@
+// import { API_CONFIG } from "@/src/config/api";
+// import { handleApiError } from "@/src/utils/errorHandler";
+// import AsyncStorage from "@react-native-async-storage/async-storage";
+// import { Picker } from "@react-native-picker/picker";
+// import * as FileSystem from "expo-file-system";
+// import * as LegacyFS from "expo-file-system/legacy";
+// import * as ImageManipulator from "expo-image-manipulator";
+// import { Image as ExpoImage } from "expo-image";
+// import * as Print from "expo-print";
+// import * as Sharing from "expo-sharing";
+// import React, { useEffect, useState } from "react";
+// import {
+//   ActivityIndicator,
+//   Alert,
+//   Dimensions,
+//   Modal,
+//   ScrollView,
+//   Text,
+//   TouchableOpacity,
+//   View,
+// } from "react-native";
+// import { useTripDetailsLogic } from "./logic";
+// import { styles } from "./styles";
+
+// const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+// export default function TripDetailsScreen({ route, navigation }: any) {
+//   const { trip, canEdit, canDriverUpdate, updateStatus } =
+//     useTripDetailsLogic(route.params.id);
+
+//   const [isUpdating, setIsUpdating] = useState(false);
+//   const [imageModalVisible, setImageModalVisible] = useState(false);
+//   const [downloading, setDownloading] = useState(false);
+//   const [selectedStatus, setSelectedStatus] = useState<string>("not_started");
+
+//   useEffect(() => {
+//     if (trip?.status) setSelectedStatus(trip.status);
+//   }, [trip?.status]);
+
+//   if (!trip) return null;
+
+//   const getCMRUrl = () => {
+//     if (!trip.cmr_url) return null;
+//     if (trip.cmr_url.startsWith("http")) return trip.cmr_url;
+//     const base = API_CONFIG.BASE_URL.replace("/api", "");
+//     return `${base}${trip.cmr_url.startsWith("/") ? trip.cmr_url : "/" + trip.cmr_url}`;
+//   };
+
+//   const cmrUrl = getCMRUrl();
+
+
+// const downloadAsPDF = async () => {
+//   if (!cmrUrl) {
+//     Alert.alert("Error", "CMR image URL is not available");
+//     return;
+//   }
+
+//   setDownloading(true);
+
+//   try {
+//     const token = await AsyncStorage.getItem("AUTH_TOKEN");
+
+//     const originalImageUri = `${LegacyFS.cacheDirectory}cmr_raw_${Date.now()}.jpg`;
+
+//     console.log("STEP 1: About to download image");
+
+//     const downloadOptions: any = {};
+//     if (token) downloadOptions.headers = { Authorization: `Bearer ${token}` };
+
+//     // ✅ Use LegacyFS for download
+//     const downloadResult = await LegacyFS.downloadAsync(cmrUrl, originalImageUri, downloadOptions);
+
+//     console.log("STEP 2: Image downloaded to", downloadResult.uri);
+
+//     // Resize + compress
+//     const manipulated = await ImageManipulator.manipulateAsync(
+//       downloadResult.uri,
+//       [{ resize: { width: 1000 } }],
+//       { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+//     );
+//     console.log("STEP 3: Image resized, optimized URI =", manipulated.uri);
+
+//     // Convert to base64 using LegacyFS
+//     const base64 = await LegacyFS.readAsStringAsync(manipulated.uri, { encoding: LegacyFS.EncodingType.Base64 });
+//     console.log("STEP 4: Base64 conversion done, length =", base64.length);
+
+//     // Generate PDF
+//     const html = `
+//       <html>
+//         <head>
+//           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+//           <style>body { margin:0; padding:0; } img { width:100%; height:auto; }</style>
+//         </head>
+//         <body>
+//           <img src="data:image/jpeg;base64,${base64}" />
+//         </body>
+//       </html>
+//     `;
+
+//     console.log("STEP 5: Before print");
+//     const pdf = await Print.printToFileAsync({ html });
+//     console.log("STEP 6: After print, pdf URI =", pdf.uri);
+
+//     await Sharing.shareAsync(pdf.uri, {
+//       mimeType: "application/pdf",
+//       dialogTitle: `CMR_${trip.trip_number}.pdf`,
+//     });
+
+//     console.log("STEP 7: Share completed");
+
+//   } catch (error) {
+//     console.error("PDF generation error:", error);
+//     Alert.alert("Error", "Failed to generate PDF");
+//   } finally {
+//     setDownloading(false);
+//   }
+// };
+
+  
+  
+
+//   const handleDownload = () => {
+//     Alert.alert(
+//       "Download CMR",
+//       "Choose file format",
+//       [
+//         { text: "PDF", onPress: downloadAsPDF },
+//         { text: "Cancel", style: "cancel" },
+//       ],
+//       { cancelable: true }
+//     );
+//   };
+
+//   return (
+//     <ScrollView style={styles.container}>
+//       <Text style={styles.title}>Trip: {trip.trip_number}</Text>
+
+//       <Text style={styles.sectionTitle}>
+//         {trip.destination_from} → {trip.destination_to}
+//       </Text>
+
+//       {cmrUrl && (
+//         <>
+//           <Text style={styles.sectionTitle}>CMR Document</Text>
+
+//           <TouchableOpacity onPress={() => setImageModalVisible(true)}>
+//             <ExpoImage
+//               source={{ uri: cmrUrl }}
+//               style={styles.cmrImage}
+//               contentFit="contain"
+//             />
+//           </TouchableOpacity>
+
+//           <TouchableOpacity
+//             style={[styles.downloadBtn, downloading && styles.downloadBtnDisabled]}
+//             onPress={handleDownload}
+//             disabled={downloading}
+//           >
+//             {downloading ? (
+//               <ActivityIndicator color="#fff" />
+//             ) : (
+//               <Text style={styles.downloadBtnText}>Download PDF</Text>
+//             )}
+//           </TouchableOpacity>
+//         </>
+//       )}
+
+//       <Modal visible={imageModalVisible} transparent>
+//         <View style={styles.modalContainer}>
+//           <TouchableOpacity
+//             style={styles.modalCloseButton}
+//             onPress={() => setImageModalVisible(false)}
+//           >
+//             <Text style={styles.modalCloseText}>✕ Close</Text>
+//           </TouchableOpacity>
+
+//           <ExpoImage
+//             source={{ uri: cmrUrl || "" }}
+//             style={styles.modalImage}
+//             contentFit="contain"
+//           />
+//         </View>
+//       </Modal>
+//     </ScrollView>
+//   );
+// }
+
 import { API_CONFIG } from "@/src/config/api";
 import { handleApiError } from "@/src/utils/errorHandler";
 import AsyncStorage from '@react-native-async-storage/async-storage';

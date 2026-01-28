@@ -23,6 +23,8 @@ export default function TripCreateScreen({ navigation }: any) {
 
       <TextInput
         style={styles.input}
+        outlineColor="rgba(255,255,255,0.5)" // normal border color
+  activeOutlineColor="#FFA500" // orange when focused
         placeholder="From"
         value={form.destination_from}
         onChangeText={(v) => set("destination_from", v)}
@@ -30,6 +32,8 @@ export default function TripCreateScreen({ navigation }: any) {
 
       <TextInput
         style={styles.input}
+        outlineColor="rgba(255,255,255,0.5)" // normal border color
+  activeOutlineColor="#FFA500" // orange when focused
         placeholder="To"
         value={form.destination_to}
         onChangeText={(v) => set("destination_to", v)}
@@ -51,7 +55,7 @@ export default function TripCreateScreen({ navigation }: any) {
       />
 
       <TouchableOpacity onPress={() => setShow(true)}>
-      <Text style={styles.label}>Trip Date</Text>
+        <Text style={styles.label}>Trip Date</Text>
         <TextInput
           style={styles.input}
           placeholder="Trip Date"

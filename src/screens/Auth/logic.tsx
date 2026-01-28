@@ -48,31 +48,5 @@ export function useAuthLogic(navigation:StackNavigationProp<RootStackParamList>)
     }
   };
 
-  const handleSignup = async (name: string, email: string, password: string) => {
-    if (!auth) return;
-
-    if (!emailRegex.test(email)) {
-      showToast("Please enter a valid email address.");
-      return;
-    }
-
-    if (!passwordRegex.test(password)) {
-      showToast(
-        "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character."
-      );
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await auth.register(email, password, name); // <-- call AuthContext register with password and name
-      showToast("Account created successfully!");
-    } catch (e) {
-      showToast("Signup failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return { isLoading, snackbar, setSnackbar, handleLogin, handleSignup };
+  return { isLoading, snackbar, setSnackbar, handleLogin };
 }

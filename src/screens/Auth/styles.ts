@@ -14,13 +14,13 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   logoContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: "#6200ee",
+    width: 80,
+    height: 80,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    backgroundColor: "gray",
+    borderRadius: 16,
+    overflow: "hidden",
   },
   title: {
     fontSize: 28,
@@ -36,10 +36,12 @@ export const styles = StyleSheet.create({
     marginTop: 16,
   },
   input: {
-    marginBottom: 12,
+    // marginBottom: 12,
+    backgroundColor: '#EBEBEB',
   },
   button: {
     marginTop: 12,
+    backgroundColor: '#333333'
   },
   contentContainerStyle: {
     flexGrow: 1,
@@ -47,5 +49,5 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
-
+  
 });

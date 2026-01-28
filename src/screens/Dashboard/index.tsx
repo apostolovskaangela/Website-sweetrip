@@ -41,9 +41,10 @@ export const Dashboard = () => {
           title="Active Trips"
           value={stats?.active_trips?.toString() ?? "0"}
           icon={
-            <MaterialCommunityIcons name="package-variant-closed" size={24} />
+            <MaterialCommunityIcons name="package-variant-closed" size={28} />
           }
         />
+
 
         <StatCard
           title="Total Vehicles"
