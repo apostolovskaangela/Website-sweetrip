@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import Login from "@/src/components/Login";
 import { AuthProvider } from "@/src/context/Auth";
+import { QueryProvider } from "@/src/lib/QueryProvider";
 import { MainNavigator } from "@/src/navigation/MainNavigator";
 import { RootStackParamList } from "@/src/navigation/types";
 import Welcome from "@/src/screens/Welcome";
@@ -71,9 +72,11 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container} edges={safeAreaEdges}>
       <StatusBar barStyle={statusBarStyle} backgroundColor="transparent" translucent={false} />
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
+      <QueryProvider>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </QueryProvider>
     </SafeAreaView>
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type Props = {
@@ -10,7 +10,9 @@ type Props = {
   onRemove?: (id: string) => void;
 };
 
-export default function PendingItemCard({ id, method, url, body, onRetry, onRemove }: Props) {
+function PendingItemCardComponent({ id, method, url, body, onRetry, onRemove }: Props) {
+  const onPressRetry = useCallback(() => onRetry?.(id), [onRetry, id]);
+  const onPressRemove = useCallback(() => onRemove?.(id), [onRemove, id]);
   return (
     <View style={styles.card}>
       <View style={styles.left}>
@@ -19,16 +21,18 @@ export default function PendingItemCard({ id, method, url, body, onRetry, onRemo
         {body ? <Text numberOfLines={1} style={styles.body}>{JSON.stringify(body)}</Text> : null}
       </View>
       <View style={styles.actions}>
-        <TouchableOpacity onPress={() => onRetry?.(id)} style={styles.actionBtn}>
+        <TouchableOpacity onPress={onPressRetry} style={styles.actionBtn}>
           <Text style={styles.actionText}>Retry</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onRemove?.(id)} style={[styles.actionBtn, styles.remove]}>
+        <TouchableOpacity onPress={onPressRemove} style={[styles.actionBtn, styles.remove]}>
           <Text style={styles.actionText}>Remove</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
+export default React.memo(PendingItemCardComponent);
 
 const styles = StyleSheet.create({
   card: {

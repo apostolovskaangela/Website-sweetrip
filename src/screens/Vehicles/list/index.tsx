@@ -1,17 +1,42 @@
 // src/screens/Vehicles/list/index.tsx
-import React from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { listVirtualizationConfig } from "@/src/lib/listConfig";
+import { VehiclesStackParamList } from "@/src/navigation/VehiclesNavigator";
 import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useCallback } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import type { Vehicle } from "../types";
 import { useVehicles } from "./logic";
 import { styles } from "./styles";
-import { VehiclesStackParamList } from "@/src/navigation/VehiclesNavigator";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 export default function VehicleList() {
-  const nav = useNavigation<NativeStackNavigationProp<VehiclesStackParamList, "VehiclesList">>();
+  const nav = useNavigation<
+    NativeStackNavigationProp<VehiclesStackParamList, "VehiclesList">
+  >();
   const { vehicles, loading, error, reload } = useVehicles();
 
-  // Example: fetch permission dynamically
+  const keyExtractor = useCallback((v: Vehicle) => v.id.toString(), []);
+  const onPressVehicle = useCallback(
+    (id: number) => nav.navigate("VehicleDetails", { id }),
+    [nav]
+  );
+  const renderItem = useCallback(
+    ({ item }: { item: Vehicle }) => (
+      <VehicleCard item={item} onPressVehicle={onPressVehicle} />
+    ),
+    [onPressVehicle]
+  );
+  const onPressCreate = useCallback(
+    () => nav.navigate("VehicleCreate"),
+    [nav]
+  );
+
   const canCreate = true; // TODO: use RoleFactory
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
@@ -28,7 +53,6 @@ export default function VehicleList() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Vehicles</Text>
@@ -38,31 +62,44 @@ export default function VehicleList() {
         {canCreate && (
           <TouchableOpacity
             style={styles.createBtn}
-            onPress={() => nav.navigate("VehicleCreate")}
+            onPress={onPressCreate}
           >
             <Text style={styles.createText}>＋ New Vehicle</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* List */}
       <FlatList
         data={vehicles}
-        keyExtractor={(v) => v.id.toString()}
+        keyExtractor={keyExtractor}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => nav.navigate("VehicleDetails", { id: item.id })}
-          >
-            <Text style={styles.title}>{item.registration_number}</Text>
-            <Text style={item.is_active ? styles.active : styles.inactive}>
-              {item.is_active ? "Active" : "Inactive"}
-            </Text>
-            {!!item.notes && <Text>{item.notes}</Text>}
-          </TouchableOpacity>
-        )}
+        renderItem={renderItem}
+        {...listVirtualizationConfig}
       />
     </View>
   );
 }
+
+interface VehicleCardProps {
+  item: Vehicle;
+  onPressVehicle: (id: number) => void;
+}
+
+const VehicleCard = React.memo<VehicleCardProps>(function VehicleCard({
+  item,
+  onPressVehicle,
+}) {
+  const onPress = useCallback(
+    () => onPressVehicle(item.id),
+    [onPressVehicle, item.id]
+  );
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress}>
+      <Text style={styles.title}>{item.registration_number}</Text>
+      <Text style={item.is_active ? styles.active : styles.inactive}>
+        {item.is_active ? "Active" : "Inactive"}
+      </Text>
+      {!!item.notes && <Text>{item.notes}</Text>}
+    </TouchableOpacity>
+  );
+});

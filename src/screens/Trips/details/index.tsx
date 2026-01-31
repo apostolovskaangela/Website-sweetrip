@@ -133,7 +133,14 @@ export default function TripDetailsScreen({ route, navigation }: any) {
         <>
           <Text style={styles.sectionTitle}>CMR Document</Text>
           <TouchableOpacity onPress={() => setImageModalVisible(true)}>
-            <ExpoImage source={{ uri: cmrUrl }} style={styles.cmrImage} contentFit="contain" />
+            <ExpoImage
+              source={{ uri: cmrUrl }}
+              style={styles.cmrImage}
+              contentFit="contain"
+              cachePolicy="memory-disk"
+              transition={200}
+              placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+            />
           </TouchableOpacity>
           <View style={styles.cmrActions}>
             <TouchableOpacity style={styles.viewBtn} onPress={() => setImageModalVisible(true)}>
@@ -158,7 +165,14 @@ export default function TripDetailsScreen({ route, navigation }: any) {
           >
             <Text style={styles.modalCloseText}>✕ Close</Text>
           </TouchableOpacity>
-          <ExpoImage source={{ uri: cmrUrl || "" }} style={styles.modalImage} contentFit="contain" />
+          <ExpoImage
+            source={{ uri: cmrUrl || "" }}
+            style={styles.modalImage}
+            contentFit="contain"
+            cachePolicy="memory-disk"
+            transition={200}
+            placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+          />
         </View>
       </Modal>
 
