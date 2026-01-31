@@ -2,8 +2,14 @@ import React from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { styles } from "./styles";
+import { getStatusBadgeStyle, getStatusLabel } from "./logic";
+import { Trip } from "../types";
 
-export const RecentTrips = ({ trips }: { trips: any[] }) => {
+interface RecentTripsProps {
+  trips: Trip[];
+}
+
+export const RecentTrips: React.FC<RecentTripsProps> = ({ trips = [] }) => {
   const navigation = useNavigation<any>();
 
   return (
@@ -13,36 +19,42 @@ export const RecentTrips = ({ trips }: { trips: any[] }) => {
       <FlatList
         data={trips}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Trips', {
-                screen: 'TripDetails',
-                params: { id: item.id},
-              })}
-          >
-            <View style={styles.card}>
-              <View>
-                <Text style={styles.cardTitle}>
-                  {item.destination_from} → {item.destination_to}
-                </Text>
-                <Text style={styles.cardSubtitle}>
-                  {item.driver?.name || "No driver assigned"}
-                </Text>
-              </View>
+        renderItem={({ item }) => {
+          const badgeStyle = getStatusBadgeStyle(item.status);
 
-              <View style={[
-                styles.statusBadge,
-                item.status === "completed"
-                  ? styles.green
-                  : item.status === "not_started"
-                  ? styles.blue
-                  : styles.orange
-              ]}>
-                <Text style={styles.statusText}>{item.status_label}</Text>
+          return (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("Trips", {
+                  screen: "TripDetails",
+                  params: { id: item.id },
+                })
+              }
+            >
+              <View style={styles.card}>
+                <View>
+                  <Text style={styles.cardTitle}>
+                    {item.destination_from} → {item.destination_to}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>
+                    {item.driver?.name ?? "No driver assigned"}
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: badgeStyle.backgroundColor },
+                  ]}
+                >
+                  <Text style={[styles.statusText, { color: badgeStyle.textColor }]}>
+                    {getStatusLabel(item.status, item.status_label)}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );

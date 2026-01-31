@@ -61,6 +61,7 @@ export class RoleFactory {
         handlers.some(h => h.canUpdateTripStatus(userId, tripDriverId)),
       canDeleteTrip: () => handlers.some(h => h.canDeleteTrip()),
       canViewAllTrips: () => handlers.some(h => h.canViewAllTrips()),
+      canViewVehicles: () => handlers.some(h => h.canViewVehicles()),
       getRoleName: () => roles.join(", "),
     };
   }

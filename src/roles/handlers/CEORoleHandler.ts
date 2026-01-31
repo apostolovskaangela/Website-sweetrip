@@ -29,4 +29,9 @@ export class CEORoleHandler extends BaseRoleHandler {
   canViewAllTrips(): boolean {
     return true;
   }
+
+  canViewVehicles(): boolean {
+    return true;
+  }
+  
 }

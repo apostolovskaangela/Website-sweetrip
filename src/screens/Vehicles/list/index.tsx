@@ -1,17 +1,30 @@
+// src/screens/Vehicles/list/index.tsx
 import React from "react";
-import { FlatList, TouchableOpacity, Text, View } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useVehicles } from "./logic";
 import { styles } from "./styles";
+import { VehiclesStackParamList } from "@/src/navigation/VehiclesNavigator";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 export default function VehicleList() {
-  const { vehicles, loading } = useVehicles();
-  const nav = useNavigation<any>();
+  const nav = useNavigation<NativeStackNavigationProp<VehiclesStackParamList, "VehiclesList">>();
+  const { vehicles, loading, error, reload } = useVehicles();
 
-  // Assuming canCreate is a constant for now
-  const canCreate = true;
+  // Example: fetch permission dynamically
+  const canCreate = true; // TODO: use RoleFactory
 
-  if (loading) return <Text>Loading...</Text>;
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
+
+  if (error)
+    return (
+      <View style={{ padding: 16 }}>
+        <Text style={{ color: "red", marginBottom: 8 }}>{error}</Text>
+        <TouchableOpacity onPress={reload}>
+          <Text style={{ color: "blue" }}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
 
   return (
     <View style={styles.container}>
@@ -36,7 +49,7 @@ export default function VehicleList() {
       <FlatList
         data={vehicles}
         keyExtractor={(v) => v.id.toString()}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}

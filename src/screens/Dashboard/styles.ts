@@ -1,11 +1,9 @@
-import { StyleSheet, Dimensions } from "react-native";
-
-const { width } = Dimensions.get("window");
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#EBEBEB", // dark blue background to match orange/blue theme
+    backgroundColor: "#EBEBEB",
   },
   contentContainer: {
     padding: 16,
@@ -27,16 +25,5 @@ export const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     marginBottom: 24,
-  },
-  statTitle: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 8,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginTop: 4,
   },
 });

@@ -4,12 +4,20 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { useTripEditLogic } from "./logic";
 import { styles } from "./styles";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { TripsStackParamList } from "@/src/navigation/TripsNavigator";
 
-export default function TripEditScreen({ route, navigation }: any) {
-  const { form, set, submit } = useTripEditLogic(route.params.id, navigation);
+type Props = NativeStackScreenProps<TripsStackParamList, "TripEdit">;
+
+export default function TripEditScreen({ route, navigation }: Props) {
+  const { form, set, submit, isSubmitting } = useTripEditLogic(
+    route.params.id,
+    navigation
+  );
 
   if (!form) return null;
 
@@ -55,7 +63,7 @@ export default function TripEditScreen({ route, navigation }: any) {
 
       <TextInput
         style={styles.input}
-        placeholder="Driver description (visible to driver)"
+        placeholder="Driver description"
         value={form.driver_description ?? ""}
         onChangeText={(v) => set("driver_description", v)}
       />
@@ -82,8 +90,30 @@ export default function TripEditScreen({ route, navigation }: any) {
         onChangeText={(v) => set("amount", Number(v))}
       />
 
-      <TouchableOpacity style={styles.submitBtn} onPress={submit}>
-        <Text style={styles.submitText}>Update</Text>
+      {/* <Text style={{ marginTop: 8, marginBottom: 4 }}>Status</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {Object.values(form.availableStatuses).map((status) => (
+          <TouchableOpacity
+            key={status}
+            style={[
+              styles.statusOption,
+              form.status === status && styles.statusOptionSelected,
+            ]}
+            onPress={() => set("status", status)}
+          >
+            <Text style={styles.statusText}>{status}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView> */}
+
+      <TouchableOpacity
+        style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
+        onPress={submit}
+        disabled={isSubmitting}
+      >
+        <Text style={styles.submitText}>
+          {isSubmitting ? "Updating..." : "Update"}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );

@@ -1,10 +1,24 @@
 import React from "react";
-import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { TripsStackParamList, DashboardTrip } from "@/src/navigation/types";
+
 import { useTripsListLogic } from "./logic";
 import { styles } from "./styles";
 
-export default function TripsListScreen({ navigation }: any) {
-  const { trips, canCreate } = useTripsListLogic();
+export default function TripsListScreen() {
+  const { trips, canCreate, loading, error } = useTripsListLogic();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<TripsStackParamList>>();
+
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
 
   return (
     <View style={styles.container}>
@@ -24,26 +38,39 @@ export default function TripsListScreen({ navigation }: any) {
         )}
       </View>
 
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
       <FlatList
         data={trips}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate("TripDetails", { id: item.id })}
-          >
-            <Text style={styles.route}>
-              {item.destination_from} → {item.destination_to}
-            </Text>
-
-            <Text style={styles.status}>{item.status}</Text>
-
-            <Text>Vehicle: {item.vehicle?.registration_number ?? "N/A"}</Text>
-            <Text>Trip #: {item.trip_number}</Text>
-            <Text>Date: {item.trip_date}</Text>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => <TripCard trip={item} />}
       />
     </View>
   );
 }
+
+interface TripCardProps {
+  trip: DashboardTrip;
+}
+
+const TripCard: React.FC<TripCardProps> = ({ trip }) => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<TripsStackParamList>>();
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate("TripDetails", { id: trip.id })}
+    >
+      <Text style={styles.route}>
+        {trip.destination_from} → {trip.destination_to}
+      </Text>
+
+      <Text style={styles.status}>{trip.status_label}</Text>
+
+      <Text>Vehicle: {trip.vehicle?.registration_number ?? "N/A"}</Text>
+      <Text>Trip #: {trip.trip_number}</Text>
+      <Text>Date: {trip.trip_date}</Text>
+    </TouchableOpacity>
+  );
+};

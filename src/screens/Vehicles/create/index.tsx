@@ -1,3 +1,5 @@
+// src/screens/Vehicles/create/index.tsx
+import React from "react";
 import { View, Text, TextInput, Switch, Button } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useCreateVehicle } from "./logic";
@@ -6,40 +8,39 @@ import { styles } from "./styles";
 export default function CreateVehicle() {
   const nav = useNavigation();
   const {
-    registration_number,
+    registrationNumber,
     setRegistrationNumber,
     notes,
     setNotes,
-    is_active,
+    isActive,
     setIsActive,
     submit,
     loading,
+    error,
   } = useCreateVehicle();
 
   const handleSubmit = async () => {
-    await submit();
-    nav.navigate("VehiclesList"); // Go back to the list after creation
+    const vehicle = await submit();
+    if (vehicle) nav.navigate("VehiclesList");
   };
 
   return (
     <View style={styles.container}>
+      {error && <Text style={styles.error}>{error}</Text>}
+
       <Text>Registration Number</Text>
       <TextInput
         style={styles.input}
-        value={registration_number}
+        value={registrationNumber}
         onChangeText={setRegistrationNumber}
       />
 
       <Text>Notes</Text>
-      <TextInput
-        style={styles.input}
-        value={notes}
-        onChangeText={setNotes}
-      />
+      <TextInput style={styles.input} value={notes} onChangeText={setNotes} />
 
       <View style={styles.row}>
         <Text>Active</Text>
-        <Switch value={is_active} onValueChange={setIsActive} />
+        <Switch value={isActive} onValueChange={setIsActive} />
       </View>
 
       <Button

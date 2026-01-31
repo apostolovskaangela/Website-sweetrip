@@ -1,3 +1,5 @@
+import { VehiclesStackParamList } from "./VehiclesNavigator";
+
 export type RootStackParamList = {
   Welcome: undefined;
   Login: undefined;
@@ -6,8 +8,8 @@ export type RootStackParamList = {
 
 export type MainDrawerParamList = {
   Dashboard: undefined;
-  Trips: undefined;
-  Vehicles: undefined;
+  Trips: { screen?: keyof TripsStackParamList; params?: any } | undefined;
+  Vehicles: { screen?: keyof VehiclesStackParamList; params?: any } | undefined;
   LiveTracking: undefined;
 };
 

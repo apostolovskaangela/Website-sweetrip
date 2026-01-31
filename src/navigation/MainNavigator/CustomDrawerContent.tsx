@@ -4,40 +4,38 @@ import {
   DrawerContentScrollView,
 } from "@react-navigation/drawer";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
-import { MainDrawerParamList } from "../types";
+import { Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "@/src/hooks/useAuth";
 import { styles } from "./styles";
+import { MenuItem, useMenuItems } from "@/src/hooks/useMenuItems";
 
-type DrawerContentProps = DrawerContentComponentProps;
-
-const menuItems = [
-  {
-    name: "Dashboard" as keyof MainDrawerParamList,
-    label: "Dashboard",
-    icon: "view-dashboard",
-  },
-  {
-    name: "Trips" as keyof MainDrawerParamList,
-    label: "Trips",
-    icon: "map-marker-path",
-  },
-  {
-    name: "Vehicles" as keyof MainDrawerParamList,
-    label: "Vehicles",
-    icon: "truck",
-  },
-  {
-    name: "LiveTracking" as keyof MainDrawerParamList,
-    label: "Live Tracking",
-    icon: "map-marker-radius",
-  },
-];
-
-export const CustomDrawerContent = (props: DrawerContentProps) => {
+export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
+  props
+) => {
   const currentRoute = props.state.routes[props.state.index].name;
   const { logout } = useAuth();
+  const menuItems = useMenuItems();
+
+  const handleNavigation = (item: MenuItem) => {
+    if (item.name === "Vehicles") {
+      props.navigation.navigate("Vehicles", { screen: "VehiclesList" });
+    } else if (item.name === "Trips") {
+      props.navigation.navigate("Trips", { screen: "TripsList" });
+    } else {
+      props.navigation.navigate(item.name);
+    }
+    props.navigation.closeDrawer();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      props.navigation.closeDrawer();
+    }
+  };
 
   return (
     <DrawerContentScrollView {...props} style={styles.drawerContent}>
@@ -53,23 +51,10 @@ export const CustomDrawerContent = (props: DrawerContentProps) => {
             <TouchableOpacity
               key={item.name}
               style={[styles.menuItem, isActive && styles.menuItemActive]}
-              onPress={() => {
-                if (item.name === "Vehicles") {
-                  props.navigation.navigate("Vehicles", {
-                    screen: "VehiclesList",
-                  });
-                } else if (item.name === "Trips") {
-                  props.navigation.navigate("Trips", { screen: "TripsList" });
-                } else {
-                  props.navigation.navigate(item.name);
-                }
-                props.navigation.closeDrawer();
-              }}
+              onPress={() => handleNavigation(item)}
             >
               <MaterialCommunityIcons
-                name={item.icon as any}
-                size={24}
-                color={isActive ? "#0a7ea4" : "#687076"}
+                name={item.icon}
                 style={styles.menuIcon}
               />
               <Text
@@ -81,18 +66,14 @@ export const CustomDrawerContent = (props: DrawerContentProps) => {
           );
         })}
       </View>
+
       <View style={styles.logoutContainer}>
         <TouchableOpacity
           style={styles.logoutButton}
-          onPress={async () => {
-            await logout();
-            props.navigation.closeDrawer();
-          }}
+          onPress={handleLogout}
         >
           <MaterialCommunityIcons
             name="logout"
-            size={24}
-            color="#d32f2f"
             style={styles.menuIcon}
           />
           <Text style={styles.logoutText}>Logout</Text>
@@ -101,5 +82,3 @@ export const CustomDrawerContent = (props: DrawerContentProps) => {
     </DrawerContentScrollView>
   );
 };
-
-

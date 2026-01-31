@@ -1,101 +1,80 @@
-import { Dashboard } from '@/src/screens/Dashboard';
-import { LiveTracking } from '@/src/screens/LiveTracking';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { createDrawerNavigator } from '@react-navigation/drawer';
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
+import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Dashboard } from '@/src/screens/Dashboard';
 import { TripsNavigator } from '../TripsNavigator';
-import { MainDrawerParamList } from '../types';
-import { CustomDrawerContent } from './CustomDrawerContent';
 import { VehiclesNavigator } from '../VehiclesNavigator';
+import { CustomDrawerContent } from './CustomDrawerContent';
+import { MainDrawerParamList } from '../types';
+import { styles } from './styles';
+import { LiveTracking } from '@/src/screens/LiveTracking';
+
+type HeaderTitleProps = {
+  navigation: DrawerNavigationProp<MainDrawerParamList>;
+  routeName: keyof MainDrawerParamList;
+};
 
 const Drawer = createDrawerNavigator<MainDrawerParamList>();
 
-export const MainNavigator = () => {
+/** Utility: map route names to display titles */
+const getHeaderTitle = (routeName: keyof MainDrawerParamList) => {
+  const titles: Record<keyof MainDrawerParamList, string> = {
+    Dashboard: 'Dashboard',
+    Trips: 'Trips',
+    Vehicles: 'Vehicles',
+    LiveTracking: 'Live Tracking',
+  };
+  return titles[routeName] ?? routeName;
+};
+
+/** Utility: handle header title press for nested navigation */
+const handleHeaderTitlePress = (navigation: DrawerNavigationProp<MainDrawerParamList>, routeName: keyof MainDrawerParamList) => {
+  const nestedScreens: Record<string, { screen: string }> = {
+    Vehicles: { screen: 'VehiclesList' },
+    Trips: { screen: 'TripsList' },
+  };
+
+  if (nestedScreens[routeName]) {
+    navigation.navigate(routeName, nestedScreens[routeName]);
+  }
+};
+
+/** Header title component */
+const HeaderTitle: React.FC<HeaderTitleProps> = ({ navigation, routeName }) => {
+  const title = getHeaderTitle(routeName);
+  return (
+    <TouchableOpacity onPress={() => handleHeaderTitlePress(navigation, routeName)}>
+      <Text style={styles.headerTitleText}>{title}</Text>
+    </TouchableOpacity>
+  );
+};
+
+export const MainNavigator: React.FC = () => {
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={({ navigation, route }) => ({
         headerShown: true,
-        headerStyle: {
-          backgroundColor: '#fff',
-          elevation: 0,
-          shadowOpacity: 0,
-        },
+        headerStyle: styles.headerStyle,
         headerTintColor: '#11181C',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-
-        // Hamburger menu
+        headerTitleStyle: styles.headerTitleText,
         headerLeft: () => (
           <TouchableOpacity
             onPress={() => navigation.openDrawer()}
-            style={{
-              marginLeft: 16,
-              padding: 8,
-            }}
+            style={styles.menuButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <MaterialCommunityIcons name="menu" size={28} color="#11181C" />
           </TouchableOpacity>
         ),
-
-        // Clickable header title
-        headerTitle: () => {
-          const currentRouteName = route.name;
-
-          // Determine if we should redirect to nested list
-          const handleTitlePress = () => {
-            if (currentRouteName === 'Vehicles') {
-              navigation.navigate('Vehicles', { screen: 'VehiclesList' });
-            } else if (currentRouteName === 'Trips') {
-              navigation.navigate('Trips', { screen: 'TripsList' });
-            }
-          };
-
-          let titleText = currentRouteName;
-          if (currentRouteName === 'Vehicles') titleText = 'Vehicles';
-          if (currentRouteName === 'Trips') titleText = 'Trips';
-          if (currentRouteName === 'Dashboard') titleText = 'Dashboard';
-          if (currentRouteName === 'LiveTracking') titleText = 'Live Tracking';
-
-          return (
-            <TouchableOpacity onPress={handleTitlePress}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#11181C' }}>
-                {titleText}
-              </Text>
-            </TouchableOpacity>
-          );
-        },
+        headerTitle: () => <HeaderTitle navigation={navigation} routeName={route.name as keyof MainDrawerParamList} />,
       })}
     >
-      <Drawer.Screen
-        name="Dashboard"
-        component={Dashboard}
-        options={{ title: 'Dashboard' }}
-      />
-      <Drawer.Screen
-        name="Trips"
-        component={TripsNavigator}
-        options={{
-          title: 'Trips',
-        }}
-      />
-      <Drawer.Screen
-        name="Vehicles"
-        component={VehiclesNavigator}
-        options={{
-          title: 'Vehicles',
-        }}
-      />
-      <Drawer.Screen
-        name="LiveTracking"
-        component={LiveTracking}
-        options={{
-          title: 'Live Tracking',
-        }}
-      />
+      <Drawer.Screen name="Dashboard" component={Dashboard} />
+      <Drawer.Screen name="Trips" component={TripsNavigator} />
+      <Drawer.Screen name="Vehicles" component={VehiclesNavigator} />
+      <Drawer.Screen name="LiveTracking" component={LiveTracking} />
     </Drawer.Navigator>
   );
 };

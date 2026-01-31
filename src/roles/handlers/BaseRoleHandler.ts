@@ -31,6 +31,10 @@ export abstract class BaseRoleHandler implements IRoleHandler {
     return false;
   }
 
+  canViewVehicles(): boolean {
+    return false;
+  }
+
   getRoleName(): string {
     return this.roleName;
   }

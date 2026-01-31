@@ -1,25 +1,35 @@
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import { MainNavigator } from './MainNavigator';
-import Welcome from '../screens/Welcome';
-import Login from '../components/Login';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+// AppNavigator.tsx
+import React, { useContext } from "react";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { AuthContext } from "../context/Auth";
+import { MainNavigator } from "./MainNavigator";
+import Welcome from "../screens/Welcome";
+import Login from "../components/Login";
+import { RootStackParamList } from "./types";
+import { AuthContextType } from "../context/Auth/types";
 
-const Stack = createNativeStackNavigator();
+// Loading screen extracted for separation of concerns
+const LoadingScreen: React.FC = () => (
+  <View style={styles.loaderContainer}>
+    <ActivityIndicator size="large" color="#007AFF" />
+  </View>
+);
 
-export function AppNavigator() {
-  const auth = useContext(AuthContext);
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
-  if (!auth) return null;
+export const AppNavigator: React.FC = () => {
+  const auth = useContext(AuthContext) as AuthContextType | null;
+
+  if (!auth) {
+    console.warn("AuthContext is null!");
+    return <LoadingScreen />;
+  }
+
   const { isLoading, isAuthenticated } = auth;
 
   if (isLoading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -34,12 +44,12 @@ export function AppNavigator() {
       )}
     </Stack.Navigator>
   );
-}
+};
 
 const styles = StyleSheet.create({
   loaderContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

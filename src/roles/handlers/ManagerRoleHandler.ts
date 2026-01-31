@@ -19,7 +19,7 @@ export class ManagerRoleHandler extends BaseRoleHandler {
 
   canUpdateTripStatus(userId: string | number, tripDriverId?: string | number): boolean {
     // Managers can update any trip status
-    return true;
+    return false;
   }
 
   canDeleteTrip(): boolean {
@@ -27,6 +27,10 @@ export class ManagerRoleHandler extends BaseRoleHandler {
   }
 
   canViewAllTrips(): boolean {
+    return true;
+  }
+
+  canViewVehicles(): boolean {
     return true;
   }
 }

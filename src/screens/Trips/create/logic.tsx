@@ -1,7 +1,8 @@
 import { tripsApi } from "@/src/services/api";
+import { NotificationManager } from "@/src/services/NotificationManager";
 import { useEffect, useState } from "react";
 
-type CreateTripForm = {
+export type CreateTripForm = {
   trip_number: string;
   destination_from: string;
   destination_to: string;
@@ -12,8 +13,8 @@ type CreateTripForm = {
   a_code?: string;
   mileage?: number;
 
-  driver_description?: string; // 👈 shown to driver + notification
-  admin_description?: string;  // 👈 admin & manager only
+  driver_description?: string;
+  admin_description?: string;
 
   invoice_number?: string;
   amount?: number;
@@ -58,21 +59,20 @@ export function useTripCreateLogic(navigation: any) {
     }
   };
 
-  const set = <K extends keyof CreateTripForm>(
-    key: K,
-    value: CreateTripForm[K]
-  ) => {
+  // Strongly-typed setter
+  const setField = <K extends keyof CreateTripForm>(key: K, value: CreateTripForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
   };
 
-  const submit = async () => {
+  // Submit form
+  const submit = async (): Promise<CreateTripForm | null> => {
     if (!form.vehicle_id || !form.driver_id) {
       console.warn("Driver and vehicle are required");
-      return;
+      return null;
     }
 
     try {
-      await tripsApi.create({
+      const response = await tripsApi.create({
         ...form,
         vehicle_id: Number(form.vehicle_id),
         driver_id: Number(form.driver_id),
@@ -80,15 +80,36 @@ export function useTripCreateLogic(navigation: any) {
         amount: form.amount ? Number(form.amount) : undefined,
       });
 
-      navigation.goBack();
+      // Notify driver
+      const managerName = "Manager/Admin"; // replace with auth if available
+      const message = `${managerName} assigned you a new trip #${form.trip_number}`;
+      NotificationManager.getInstance().notifyDriver(form.driver_id, message);
+
+      // Return the created trip
+      return {
+        trip_number: response.trip.trip_number,
+        destination_from: response.trip.destination_from,
+        destination_to: response.trip.destination_to,
+        vehicle_id: response.trip.vehicle?.id || 0,
+        driver_id: response.trip.driver?.id || 0,
+        a_code: response.trip.a_code,
+        mileage: response.trip.mileage,
+        driver_description: response.trip.driver_description,
+        admin_description: response.trip.admin_description,
+        invoice_number: response.trip.invoice_number,
+        amount: response.trip.amount,
+        trip_date: response.trip.trip_date,
+        status: response.trip.status as CreateTripForm["status"],
+      };
     } catch (error: any) {
-      console.error("Create trip error:", error.response?.data);
+      console.error("Create trip error:", error.response?.data || error.message);
+      return null;
     }
   };
 
   return {
     form,
-    set,
+    setField, 
     submit,
     drivers,
     vehicles,

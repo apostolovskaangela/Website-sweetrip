@@ -1,26 +1,30 @@
 // src/screens/Vehicles/list/logic.tsx
-import { useState, useEffect } from "react";
-import { vehiclesApi } from "@/src/services/api";
+import { useState, useEffect, useCallback } from "react";
+import { Vehicle } from "../types";
+import { VehicleRepository } from "./repository";
 
 export function useVehicles() {
-  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadVehicles = async () => {
-      try {
-        const vehiclesData = await vehiclesApi.list();
-        setVehicles(vehiclesData);
-      } catch (error) {
-        console.error("Vehicles API error", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadVehicles();
+  const loadVehicles = useCallback(async () => {
+    const repo = new VehicleRepository(); 
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await repo.list();
+      setVehicles(data);
+    } catch (err) {
+      setError(`Failed to load vehicles. Please try again. ${err}`);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  
-  return { vehicles, loading };
+  useEffect(() => {
+    loadVehicles();
+  }, [loadVehicles]);
+
+  return { vehicles, loading, error, reload: loadVehicles };
 }

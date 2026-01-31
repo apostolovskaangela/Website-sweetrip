@@ -1,10 +1,20 @@
 import React from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { getVehicleStatusBadge } from "./logic";
 import { styles } from "./styles";
+import { Vehicle } from "../types";
 
-export const VehicleStatus = ({ vehicles }: { vehicles: any[] }) => {
+interface VehicleStatusProps {
+  vehicles: Vehicle[];
+}
+
+export const VehicleStatus: React.FC<VehicleStatusProps> = ({ vehicles = [] }) => {
   const navigation = useNavigation<any>();
+
+  if (!vehicles.length) {
+    return <Text style={{ margin: 8 }}>No vehicles available</Text>;
+  }
 
   return (
     <View style={{ marginVertical: 8 }}>
@@ -13,27 +23,37 @@ export const VehicleStatus = ({ vehicles }: { vehicles: any[] }) => {
       <FlatList
         data={vehicles}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Vehicles', {
-              screen: 'VehicleDetails',
-              params: { id: item.id},
-            })}
-          >
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{item.registration_number}</Text>
+        renderItem={({ item }) => {
+          const badge = getVehicleStatusBadge(item);
 
-              <View style={[
-                styles.statusBadge,
-                item.is_active ? styles.green : styles.red
-              ]}>
-                <Text style={styles.statusText}>
-                  {item.is_active ? "Active" : "Inactive"}
+          return (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("Vehicles", {
+                  screen: "VehicleDetails",
+                  params: { id: item.id },
+                })
+              }
+            >
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>
+                  {item.registration_number ?? "No registration"}
                 </Text>
+
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: badge.backgroundColor },
+                  ]}
+                >
+                  <Text style={[styles.statusText, { color: badge.textColor }]}>
+                    {badge.label}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );

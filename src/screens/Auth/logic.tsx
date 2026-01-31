@@ -1,21 +1,24 @@
-import { RootStackParamList } from "@/app/App";
-import { AuthContext } from "@/src/context/AuthContext";
-import { StackNavigationProp } from "@react-navigation/stack";
 import { useContext, useState } from "react";
+import { AuthContext } from "@/src/context/Auth";
 
-export function useAuthLogic(navigation:StackNavigationProp<RootStackParamList>) {
+interface SnackbarState {
+  visible: boolean;
+  message: string;
+}
+
+export function useAuthLogic() {
   const auth = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string }>({
+  const [snackbar, setSnackbar] = useState<SnackbarState>({
     visible: false,
     message: "",
   });
 
-  const showToast = (message: string) => setSnackbar({ visible: true, message });
+  const showToast = (message: string) => {
+    setSnackbar({ visible: true, message });
+  };
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // const passwordRegex =
-  //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
   const handleLogin = async (email: string, password: string) => {
     if (!auth) return;
@@ -25,13 +28,6 @@ export function useAuthLogic(navigation:StackNavigationProp<RootStackParamList>)
       return;
     }
 
-    // if (!passwordRegex.test(password)) {
-    //   showToast(
-    //     "Password must be at least 8 characters long, include uppercase, lowercase, number, and special character."
-    //   );
-    //   return;
-    // }
-
     if (password.length <= 6) {
       showToast("Password must be longer than 6 characters.");
       return;
@@ -39,14 +35,19 @@ export function useAuthLogic(navigation:StackNavigationProp<RootStackParamList>)
 
     setIsLoading(true);
     try {
-      await auth.login(email, password); // <-- call AuthContext login with password
-      showToast("Login successful!"); // AppNavigator will now show Dashboard
-    } catch (e) {
+      await auth.login(email, password);
+      showToast("Login successful!");
+    } catch {
       showToast("Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { isLoading, snackbar, setSnackbar, handleLogin };
+  return {
+    isLoading,
+    snackbar,
+    setSnackbar,
+    handleLogin,
+  };
 }

@@ -1,21 +1,32 @@
-import { useEffect, useState, useCallback } from "react";
-import { vehiclesApi } from "@/src/services/api";
+import { useState, useCallback, useMemo } from "react";
+import { VehicleRepository } from "./repository";
+import { Vehicle } from "../types";
 
 export function useVehicleDetails(id: number) {
-  const [vehicle, setVehicle] = useState<any>(null);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Make repo instance stable
+  const repo = useMemo(() => new VehicleRepository(), []);
 
   const loadVehicle = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const data = await vehiclesApi.get(id); // GET /vehicles/:id
-      setVehicle(data); // axios already returns vehicle
-    } catch (err) {
-      console.log("Vehicle details API error", err);
+      const data = await repo.getById(id);
+      setVehicle(data);
+    } catch (err: any) {
+      setError(err.message || "Error loading vehicle");
+      setVehicle(null);
+    } finally {
+      setLoading(false);
     }
-  }, [id]);
+  }, [id, repo]); // now repo is stable, eslint is happy
 
-  useEffect(() => {
-    loadVehicle();
-  }, [loadVehicle]);
-
-  return { vehicle, loadVehicle };
+  return { vehicle, loadVehicle, loading, error };
 }
+
+// Since repo is created inside the hook on every render, 
+// adding it to the dependency array would make the callback recreate every 
+// time anyway, which defeats the purpose of useCallback.

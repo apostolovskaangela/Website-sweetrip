@@ -67,13 +67,15 @@ export const styles = StyleSheet.create({
   },
   menuIcon: {
     marginRight: 16,
+    color: "#001F3F",
+    fontSize: 24,
   },
   menuLabel: {
     fontSize: 16,
-    color: "#687076",
+    color: "#001F3F",
   },
   menuLabelActive: {
-    color: "#0a7ea4",
+    color: "#001F3F",
     fontWeight: "600",
   },
   logoutContainer: {
@@ -95,4 +97,20 @@ export const styles = StyleSheet.create({
     color: "#d32f2f",
     fontWeight: "600",
   },
+
+  headerStyle: {
+    backgroundColor: '#fff',
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  headerTitleText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#11181C',
+  },
+  menuButton: {
+    marginLeft: 16,
+    padding: 8,
+  },
+  
 });

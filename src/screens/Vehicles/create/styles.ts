@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native"
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: { padding: 16 },
@@ -7,7 +7,8 @@ export const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     padding: 10,
-    marginBottom: 12
+    marginBottom: 12,
   },
-  row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }
-})
+  row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 20 },
+  error: { color: "red", marginBottom: 10, fontWeight: "600" },
+});

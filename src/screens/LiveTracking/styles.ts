@@ -1,0 +1,47 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Marker style for other drivers
+  markerStyle: {
+    backgroundColor: '#001F3F', // dark blue
+    padding: 6,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 28,
+    minHeight: 28,
+  },
+  driverMarkerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+
+  // Marker style for yourself (optional)
+  myMarker: {
+    backgroundColor: '#FF4136', // red/orange
+    padding: 6,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 28,
+    minHeight: 28,
+  },
+  myMarkerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+});

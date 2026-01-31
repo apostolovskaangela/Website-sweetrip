@@ -30,6 +30,8 @@ export interface IRoleHandler {
    */
   canViewAllTrips(): boolean;
 
+  canViewVehicles(): boolean;
+  
   /**
    * Get the role name
    */

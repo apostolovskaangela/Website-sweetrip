@@ -1,13 +1,6 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: "#f5f7fa", // light gradient alternative
-  },
   card: {
     width: "100%",
     maxWidth: 400,
@@ -18,9 +11,8 @@ export const styles = StyleSheet.create({
     height: 80,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "gray",
+    backgroundColor: "#001F3F",
     borderRadius: 16,
-    overflow: "hidden",
   },
   title: {
     fontSize: 28,
@@ -32,16 +24,13 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     color: "#555",
   },
-  form: {
-    marginTop: 16,
-  },
   input: {
-    // marginBottom: 12,
-    backgroundColor: '#EBEBEB',
+    marginBottom: 12,
+    backgroundColor: "#EBEBEB",
   },
   button: {
     marginTop: 12,
-    backgroundColor: '#333333'
+    backgroundColor: "#001F3F",
   },
   contentContainerStyle: {
     flexGrow: 1,
@@ -49,5 +38,4 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
   },
-  
 });

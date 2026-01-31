@@ -1,49 +1,34 @@
-// import { View, Text, Button } from "react-native"
-// import { useRoute, useNavigation } from "@react-navigation/native"
-// import { useVehicleDetails } from "./logic"
-
-// export default function VehicleDetails() {
-//   const { id } = useRoute<any>().params
-//   const { vehicle } = useVehicleDetails(id)
-//   const nav = useNavigation<any>()
-
-//   if (!vehicle) return <Text>Loading...a</Text>
-
-//   return (
-//     <View style={{ padding: 16 }}>
-//       <Text style={{ fontSize: 22 }}>{vehicle.registration_number}</Text>
-//       <Text>{vehicle.is_active ? "Active" : "Inactive"}</Text>
-//       <Text>{vehicle.notes}</Text>
-
-//       <Button title="Edit" onPress={() => nav.navigate("VehicleEdit", { id })} />
-//     </View>
-//   )
-// }
-
-import { View, Text, Button } from "react-native";
+import { View, Text, Button, ActivityIndicator } from "react-native";
 import { useRoute, useNavigation, useFocusEffect } from "@react-navigation/native";
-import { useVehicleDetails } from "./logic";
 import { useCallback } from "react";
+import { useVehicleDetails } from "./logic";
+import { VehiclesStackParamList } from "@/src/navigation/VehiclesNavigator";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RouteProp } from "@react-navigation/native";
+
+type VehicleDetailsNavProp = NativeStackNavigationProp<VehiclesStackParamList, "VehicleDetails">;
+type VehicleDetailsRouteProp = RouteProp<VehiclesStackParamList, "VehicleDetails">;
 
 export default function VehicleDetails() {
-  const { id } = useRoute<any>().params;
-  const nav = useNavigation<any>();
-  const { vehicle, loadVehicle } = useVehicleDetails(id); // we'll export loadVehicle
+  const nav = useNavigation<VehicleDetailsNavProp>();
+  const { id } = useRoute<VehicleDetailsRouteProp>().params;
+  const { vehicle, loadVehicle, loading, error } = useVehicleDetails(id);
 
-  // Reload vehicle whenever screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadVehicle();
     }, [id])
   );
 
-  if (!vehicle) return <Text>Loading...</Text>;
+  if (loading) return <ActivityIndicator size="large" style={{ flex: 1, justifyContent: "center" }} />;
+  if (error) return <Text style={{ padding: 16, color: "red" }}>{error}</Text>;
+  if (!vehicle) return <Text style={{ padding: 16 }}>Vehicle not found</Text>;
 
   return (
     <View style={{ padding: 16 }}>
       <Text style={{ fontSize: 22 }}>{vehicle.registration_number}</Text>
       <Text>{vehicle.is_active ? "Active" : "Inactive"}</Text>
-      <Text>{vehicle.notes}</Text>
+      <Text>{vehicle.notes || "No notes"}</Text>
 
       <Button title="Edit" onPress={() => nav.navigate("VehicleEdit", { id })} />
     </View>
