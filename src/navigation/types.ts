@@ -11,6 +11,7 @@ export type MainDrawerParamList = {
   Trips: { screen?: keyof TripsStackParamList; params?: any } | undefined;
   Vehicles: { screen?: keyof VehiclesStackParamList; params?: any } | undefined;
   LiveTracking: undefined;
+  OfflineQueue: undefined;
 };
 
 export type TripsStackParamList = {

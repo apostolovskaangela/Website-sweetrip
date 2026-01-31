@@ -1,14 +1,15 @@
+import OfflineQueueScreen from '@/src/components/OfflineQueueScreen';
+import { Dashboard } from '@/src/screens/Dashboard';
+import { LiveTracking } from '@/src/screens/LiveTracking';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
-import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Dashboard } from '@/src/screens/Dashboard';
 import { TripsNavigator } from '../TripsNavigator';
+import { MainDrawerParamList } from '../types';
 import { VehiclesNavigator } from '../VehiclesNavigator';
 import { CustomDrawerContent } from './CustomDrawerContent';
-import { MainDrawerParamList } from '../types';
 import { styles } from './styles';
-import { LiveTracking } from '@/src/screens/LiveTracking';
 
 type HeaderTitleProps = {
   navigation: DrawerNavigationProp<MainDrawerParamList>;
@@ -74,6 +75,7 @@ export const MainNavigator: React.FC = () => {
       <Drawer.Screen name="Dashboard" component={Dashboard} />
       <Drawer.Screen name="Trips" component={TripsNavigator} />
       <Drawer.Screen name="Vehicles" component={VehiclesNavigator} />
+      <Drawer.Screen name="OfflineQueue" component={OfflineQueueScreen} />
       <Drawer.Screen name="LiveTracking" component={LiveTracking} />
     </Drawer.Navigator>
   );

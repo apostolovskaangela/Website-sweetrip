@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosClient from '../axiosClient';
+import { enqueueRequest } from '../offline';
 
 export interface Trip {
   id: number;
@@ -107,32 +108,88 @@ export interface UpdateStatusResponse {
 export const tripsApi = {
   list: async (page?: number): Promise<TripsListResponse> => {
     const params = page ? { page } : {};
-    const response = await axiosClient.get<TripsListResponse>('/trips', { params });
-    return response.data;
+    const cacheKey = `/trips${page ? `?page=${page}` : ''}`;
+    try {
+      const response = await axiosClient.get<TripsListResponse>('/trips', { params });
+      try {
+        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(response.data));
+      } catch (e) {
+        if (__DEV__) console.warn('Failed to cache trips list', e);
+      }
+      return response.data;
+    } catch (err: any) {
+      if (__DEV__) console.warn('Trips list request failed, returning cached data if available', err?.message || err);
+      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
+      if (cached) return JSON.parse(cached);
+      throw err;
+    }
   },
 
   get: async (id: number): Promise<Trip> => {
-    const response = await axiosClient.get<TripResponse>(`/trips/${id}`);
-    return response.data.trip;
+    const cacheKey = `/trips/${id}`;
+    try {
+      const response = await axiosClient.get<TripResponse>(`/trips/${id}`);
+      try {
+        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(response.data.trip));
+      } catch (e) {
+        if (__DEV__) console.warn('Failed to cache trip', e);
+      }
+      return response.data.trip;
+    } catch (err: any) {
+      if (__DEV__) console.warn('Trip fetch failed, returning cached if present', err?.message || err);
+      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
+      if (cached) return JSON.parse(cached);
+      throw err;
+    }
   },
 
   create: async (data: CreateTripRequest): Promise<CreateTripResponse> => {
-    const response = await axiosClient.post<CreateTripResponse>('/trips', data);
-    return response.data;
+    try {
+      const response = await axiosClient.post<CreateTripResponse>('/trips', data);
+      return response.data;
+    } catch (err: any) {
+      // enqueue request to be synced later
+      await enqueueRequest({ method: 'POST', url: '/trips', body: data });
+      const tempTrip: any = { id: -Date.now(), ...data };
+      return { message: 'created_offline', trip: tempTrip } as unknown as CreateTripResponse;
+    }
   },
 
   update: async (id: number, data: UpdateTripRequest): Promise<CreateTripResponse> => {
-    const response = await axiosClient.put<CreateTripResponse>(`/trips/${id}`, data);
-    return response.data;
+    try {
+      const response = await axiosClient.put<CreateTripResponse>(`/trips/${id}`, data);
+      return response.data;
+    } catch (err: any) {
+      await enqueueRequest({ method: 'PUT', url: `/trips/${id}`, body: data });
+      const tempTrip: any = { id, ...data };
+      return { message: 'updated_offline', trip: tempTrip } as unknown as CreateTripResponse;
+    }
   },
 
   delete: async (id: number): Promise<void> => {
-    await axiosClient.delete(`/trips/${id}`);
+    try {
+      await axiosClient.delete(`/trips/${id}`);
+    } catch (err: any) {
+      await enqueueRequest({ method: 'DELETE', url: `/trips/${id}` });
+    }
   },
 
   getCreateData: async (): Promise<TripCreateDataResponse> => {
-    const response = await axiosClient.get<TripCreateDataResponse>('/trips/create');
-    return response.data;
+    const cacheKey = `/trips/create`;
+    try {
+      const response = await axiosClient.get<TripCreateDataResponse>('/trips/create');
+      try {
+        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(response.data));
+      } catch (e) {
+        if (__DEV__) console.warn('Failed to cache trip create data', e);
+      }
+      return response.data;
+    } catch (err: any) {
+      if (__DEV__) console.warn('Trip create data request failed, returning cached data if available', err?.message || err);
+      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
+      if (cached) return JSON.parse(cached);
+      throw err;
+    }
   },
 
   updateStatus: async (id: number, status: UpdateStatusRequest): Promise<UpdateStatusResponse> => {

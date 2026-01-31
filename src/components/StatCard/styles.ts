@@ -1,3 +1,4 @@
+import { cardShadow } from "@/src/utils/platformStyles";
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
@@ -5,7 +6,9 @@ export const styles = StyleSheet.create({
     width: "48%",
     marginBottom: 12,
     padding: 8,
-    borderRadius: 12, // ensure rounded corners
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    ...cardShadow(2),
   },
   statCardHeader: {
     flexDirection: "row",

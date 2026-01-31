@@ -1,3 +1,4 @@
+import { screenPaddingHorizontal } from "@/src/config/platform";
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
@@ -6,7 +7,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "#EBEBEB",
   },
   contentContainer: {
-    padding: 16,
+    padding: screenPaddingHorizontal,
     paddingBottom: 32,
   },
   header: {

@@ -1,17 +1,14 @@
+import { safeAreaBottomInset } from "@/src/config/platform";
+import { cardShadow, headerShadow } from "@/src/utils/platformStyles";
 import { StyleSheet } from "react-native";
-
-const insets = { bottom: 0 };
 
 export const styles = StyleSheet.create({
   tabBar: {
-    height: 70 + insets.bottom,
+    height: 70 + safeAreaBottomInset,
     backgroundColor: "#fff",
     borderTopWidth: 0,
-    elevation: 5, // Android shadow
-    shadowColor: "#000", // iOS shadow
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    paddingBottom: safeAreaBottomInset,
+    ...cardShadow(5),
   },
   badgeContainer: {
     position: "absolute",
@@ -100,8 +97,7 @@ export const styles = StyleSheet.create({
 
   headerStyle: {
     backgroundColor: '#fff',
-    elevation: 0,
-    shadowOpacity: 0,
+    ...headerShadow(),
   },
   headerTitleText: {
     fontSize: 18,

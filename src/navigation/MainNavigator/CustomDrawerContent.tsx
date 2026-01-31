@@ -1,13 +1,14 @@
+import OfflineIndicator from '@/src/components/OfflineIndicator';
+import { useAuth } from "@/src/hooks/useAuth";
+import { MenuItem, useMenuItems } from "@/src/hooks/useMenuItems";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
-  DrawerContentComponentProps,
-  DrawerContentScrollView,
+    DrawerContentComponentProps,
+    DrawerContentScrollView,
 } from "@react-navigation/drawer";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { useAuth } from "@/src/hooks/useAuth";
 import { styles } from "./styles";
-import { MenuItem, useMenuItems } from "@/src/hooks/useMenuItems";
 
 export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
   props
@@ -42,6 +43,7 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
       <View style={styles.drawerHeader}>
         <Text style={styles.drawerTitle}>Sweetrip</Text>
         <Text style={styles.drawerSubtitle}>Fleet Management</Text>
+        <OfflineIndicator onPress={() => props.navigation.navigate('OfflineQueue')} />
       </View>
 
       <View style={styles.menuContainer}>
