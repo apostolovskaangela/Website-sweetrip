@@ -2,6 +2,7 @@ import { API_CONFIG } from '@/src/config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
+import { localAxiosAdapter } from '@/src/services/localApi/adapter';
 
 // Base URL - adjust based on your environment
 const BASE_URL = API_CONFIG.BASE_URL;
@@ -10,10 +11,7 @@ const BASE_URL = API_CONFIG.BASE_URL;
 if (__DEV__) {
   console.log('🌐 API Base URL:', BASE_URL);
   console.log('📱 Platform:', Platform.OS);
-  console.log('💡 If you see network errors, make sure:');
-  console.log('   1. Backend is running on the configured port');
-  console.log('   2. For physical devices, use your machine IP (not localhost)');
-  console.log('   3. Update src/config/api.ts with correct URL');
+  console.log('💡 SweetTrip is running in local SQLite mode.');
 }
 
 // Create axios instance
@@ -24,6 +22,10 @@ const axiosClient = axios.create({
     'Accept': 'application/json',
   },
   timeout: 10000, // 10 second timeout
+  // Route requests to a local SQLite-backed API (no network / no Laravel).
+  adapter: localAxiosAdapter,
+  // Ensure non-2xx statuses reject (so callers hit their catch paths).
+  validateStatus: (status) => status >= 200 && status < 300,
 });
 
 // Request interceptor to add auth token
@@ -65,40 +67,6 @@ axiosClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-
-    // Enhanced error logging for network issues
-    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      console.error('❌ Network Error Details:', {
-        message: error.message,
-        code: error.code,
-        baseURL: BASE_URL,
-        url: originalRequest?.url,
-        fullURL: `${BASE_URL}${originalRequest?.url}`,
-      });
-      
-      console.error('\n⚠️ TROUBLESHOOTING NETWORK ERROR:');
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('1. ✅ Check if backend is running:');
-      console.error('   Open browser: http://192.168.1.103:8000/api/login');
-      console.error('   (Should show error, but confirms server is reachable)');
-      console.error('');
-      console.error('2. ✅ Laravel server must bind to 0.0.0.0 (not 127.0.0.1):');
-      console.error('   Run: php artisan serve --host=0.0.0.0 --port=8000');
-      console.error('   NOT: php artisan serve (this only binds to localhost)');
-      console.error('');
-      console.error('3. ✅ Check firewall settings:');
-      console.error('   Windows: Allow port 8000 in Windows Firewall');
-      console.error('   Mac/Linux: Check firewall rules');
-      console.error('');
-      console.error('4. ✅ Verify IP address:');
-      console.error('   Current IP: 192.168.1.103');
-      console.error('   Run "ipconfig" (Windows) or "ifconfig" (Mac/Linux) to verify');
-      console.error('');
-      console.error('5. ✅ Network connectivity:');
-      console.error('   Device/emulator must be on same network as backend');
-      console.error('   Try ping 192.168.1.103 from device/emulator');
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-    }
 
     // Handle 401 Unauthorized - token expired or invalid
     if (error.response?.status === 401 && !originalRequest._retry) {

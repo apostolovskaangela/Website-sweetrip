@@ -1,5 +1,3 @@
-import * as Notifications from "expo-notifications";
-
 export type NotificationCallback = (notification: any) => void;
 
 export type NotificationObserver = NotificationCallback;
@@ -9,9 +7,11 @@ export class NotificationManager {
   private observers: NotificationCallback[] = [];
 
   private constructor() {
-    Notifications.addNotificationReceivedListener(notification => {
-      this.notifyAll(notification);
-    });
+    // NOTE:
+    // For SDK 53+ in Expo Go, remote push notifications are not supported and
+    // importing `expo-notifications` can crash the app.
+    //
+    // For this school project we keep a lightweight in-app observer bus only.
   }
 
   static getInstance() {

@@ -1,0 +1,184 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "CEO",
+      "email": "ceo@example.com",
+      "password": "password",
+      "role_id": 1,
+      "manager_id": null,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 2,
+      "name": "Jovan (Manager)",
+      "email": "jovan@example.com",
+      "password": "123123123",
+      "role_id": 2,
+      "manager_id": null,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 3,
+      "name": "Kenan (Manager)",
+      "email": "kenan@example.com",
+      "password": "123123123",
+      "role_id": 2,
+      "manager_id": null,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 4,
+      "name": "Admin",
+      "email": "admin@example.com",
+      "password": "password",
+      "role_id": 3,
+      "manager_id": null,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 5,
+      "name": "Angelique (Driver)",
+      "email": "angelique@example.com",
+      "password": "password",
+      "role_id": 4,
+      "manager_id": 2,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 6,
+      "name": "Nellie (Driver)",
+      "email": "nellie@example.com",
+      "password": "password",
+      "role_id": 4,
+      "manager_id": 2,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 7,
+      "name": "Embla (Driver)",
+      "email": "embla@example.com",
+      "password": "password",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    }
+  ],
+  "vehicles": [
+    {
+      "id": 1,
+      "registration_number": "SK-101-AA",
+      "notes": "Assigned to Manager 2",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 2,
+      "registration_number": "SK-202-BB",
+      "notes": "Assigned to Manager 2",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 3,
+      "registration_number": "SK-303-CC",
+      "notes": "Assigned to Manager 3",
+      "is_active": true,
+      "manager_id": 3
+    }
+  ],
+  "trips": [
+    {
+      "id": 1,
+      "trip_number": "TRIP-001",
+      "vehicle_id": 1,
+      "driver_id": 5,
+      "a_code": "A123",
+      "destination_from": "Skopje",
+      "destination_to": "Tetovo",
+      "status": "not_started",
+      "mileage": 45.5,
+      "cmr": null,
+      "driver_description": "Deliver on time",
+      "admin_description": null,
+      "trip_date": "2026-02-01",
+      "invoice_number": "INV-001",
+      "amount": 250.0,
+      "created_by": 2
+    },
+    {
+      "id": 2,
+      "trip_number": "TRIP-002",
+      "vehicle_id": 2,
+      "driver_id": 6,
+      "a_code": null,
+      "destination_from": "Skopje",
+      "destination_to": "Veles",
+      "status": "in_process",
+      "mileage": 54.0,
+      "cmr": null,
+      "driver_description": null,
+      "admin_description": "Handle fragile cargo",
+      "trip_date": "2026-02-01",
+      "invoice_number": null,
+      "amount": null,
+      "created_by": 2
+    },
+    {
+      "id": 3,
+      "trip_number": "TRIP-003",
+      "vehicle_id": 3,
+      "driver_id": 7,
+      "a_code": "B555",
+      "destination_from": "Tetovo",
+      "destination_to": "Ohrid",
+      "status": "completed",
+      "mileage": 133.2,
+      "cmr": "seeded://cmr/TRIP-003",
+      "driver_description": null,
+      "admin_description": null,
+      "trip_date": "2026-01-15",
+      "invoice_number": "INV-015",
+      "amount": 800.0,
+      "created_by": 3
+    }
+  ],
+  "trip_stops": [
+    {
+      "id": 1,
+      "trip_id": 1,
+      "destination": "Gostivar",
+      "stop_order": 1,
+      "notes": "Quick stop"
+    },
+    {
+      "id": 2,
+      "trip_id": 3,
+      "destination": "Kicevo",
+      "stop_order": 1,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "trip_id": 3,
+      "destination": "Struga",
+      "stop_order": 2,
+      "notes": null
+    }
+  ]
+}
+

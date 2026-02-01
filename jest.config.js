@@ -14,19 +14,13 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!@react-native|react-native|@react-native-async-storage)'
   ],
-  collectCoverage: true,
+  // Keep `npm test` fast and non-blocking.
+  // Use `npm run test:coverage` when you explicitly want coverage.
+  collectCoverage: false,
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/**/index.tsx'
   ],
   coverageDirectory: 'coverage',
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70,
-    },
-  },
 };

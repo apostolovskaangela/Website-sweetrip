@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/38</span>
+                <span class='fraction'>0/37</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>0/11</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/35</span>
+                <span class='fraction'>0/34</span>
             </div>
         
             
@@ -151,14 +151,7 @@
 <a name='L86'></a><a href='#L86'>86</a>
 <a name='L87'></a><a href='#L87'>87</a>
 <a name='L88'></a><a href='#L88'>88</a>
-<a name='L89'></a><a href='#L89'>89</a>
-<a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a>
-<a name='L92'></a><a href='#L92'>92</a>
-<a name='L93'></a><a href='#L93'>93</a>
-<a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L89'></a><a href='#L89'>89</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -177,11 +170,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -254,7 +242,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import axiosClient from '@/src/services/axiosClient';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
 &nbsp;
 export interface LiveDriver {
   id: number;
@@ -271,11 +258,6 @@ export function <span class="fstat-no" title="function not covered" >useLiveDriv
   const intervalIdRef = <span class="cstat-no" title="statement not covered" >useRef&lt;ReturnType&lt;typeof setInterval&gt; | null&gt;(null);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-    const API_BASE =
-<span class="cstat-no" title="statement not covered" >      Platform.OS === 'android'</span>
-        ? 'http://10.0.2.2:8000/api/driver'
-        : 'http://192.168.1.103:8000/api/driver';
-&nbsp;
     async function <span class="fstat-no" title="function not covered" >requestLocationPermission(</span>) {
       const { status } = <span class="cstat-no" title="statement not covered" >await Location.requestForegroundPermissionsAsync();</span>
 <span class="cstat-no" title="statement not covered" >      setLocationGranted(status === 'granted');</span>
@@ -284,7 +266,7 @@ export function <span class="fstat-no" title="function not covered" >useLiveDriv
 &nbsp;
     function <span class="fstat-no" title="function not covered" >fetchDrivers(</span>) {
 <span class="cstat-no" title="statement not covered" >      axiosClient</span>
-        .get&lt;LiveDriver[]&gt;(`${API_BASE}/live-positions`)
+        .get&lt;LiveDriver[]&gt;(`/driver/live-positions`)
         .then(<span class="fstat-no" title="function not covered" >(r</span>es) =&gt; {
 <span class="cstat-no" title="statement not covered" >          if (__DEV__) <span class="cstat-no" title="statement not covered" >console.log('📍 Fetched drivers:', res.data);</span></span>
 <span class="cstat-no" title="statement not covered" >          setDrivers(res.data);</span>
@@ -300,7 +282,7 @@ export function <span class="fstat-no" title="function not covered" >useLiveDriv
         const currentLocation = <span class="cstat-no" title="statement not covered" >await Location.getCurrentPositionAsync({</span>
           accuracy: Location.Accuracy.High,
         });
-<span class="cstat-no" title="statement not covered" >        await axiosClient.post(`${API_BASE}/update-location`, {</span>
+<span class="cstat-no" title="statement not covered" >        await axiosClient.post(`/driver/update-location`, {</span>
           lat: currentLocation.coords.latitude,
           lng: currentLocation.coords.longitude,
         });
@@ -317,7 +299,7 @@ export function <span class="fstat-no" title="function not covered" >useLiveDriv
 <span class="fstat-no" title="function not covered" >        (l</span>ocation) =&gt; {
 <span class="cstat-no" title="statement not covered" >          if (__DEV__) <span class="cstat-no" title="statement not covered" >console.log('🧭 Updated location:', location.coords);</span></span>
 <span class="cstat-no" title="statement not covered" >          axiosClient</span>
-            .post(`${API_BASE}/update-location`, {
+            .post(`/driver/update-location`, {
               lat: location.coords.latitude,
               lng: location.coords.longitude,
             })
@@ -352,7 +334,7 @@ export function <span class="fstat-no" title="function not covered" >useLiveDriv
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-01-31T19:21:40.115Z
+                at 2026-02-01T00:08:09.175Z
             </div>
         <script src="../prettify.js"></script>
         <script>

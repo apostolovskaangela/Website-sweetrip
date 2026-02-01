@@ -7,12 +7,10 @@ import { useTripCreateLogic, CreateTripForm } from "./logic";
 
 type TripCreateScreenProps = {
   navigation: any;
-  route: { params?: { onTripCreated?: (trip: CreateTripForm) => void } };
 };
 
 export default function TripCreateScreen({
   navigation,
-  route,
 }: TripCreateScreenProps) {
   const { form, setField, submit, drivers, vehicles } = useTripCreateLogic();
 
@@ -22,8 +20,6 @@ export default function TripCreateScreen({
   const handleSubmit = async () => {
     const newTrip = await submit();
     if (newTrip) {
-      // Notify parent screen to refresh trip list immediately
-      route.params?.onTripCreated?.(newTrip);
       navigation.goBack();
     }
   };

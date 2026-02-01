@@ -13,6 +13,7 @@ import Welcome from "@/src/screens/Welcome";
 import Offline from '@/src/services/offline';
 import { useEffect } from "react";
 import { AppState } from 'react-native';
+import { initDatabase } from '@/src/services/db';
 import { useAppNavigatorLogic } from "./logic";
 import { styles } from "./styles";
 
@@ -47,6 +48,11 @@ function AppNavigator() {
 
 export default function App() {
   useEffect(() => {
+    // Initialize local SQLite database (seeded from api/db.json on first run)
+    initDatabase().catch((e) => {
+      console.error('Failed to init SQLite DB', e);
+    });
+
     // Start background sync for any queued offline requests
     Offline.startBackgroundSync();
 

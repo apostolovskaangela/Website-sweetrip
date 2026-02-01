@@ -21,7 +21,7 @@ export default function CreateVehicle() {
 
   const handleSubmit = async () => {
     const vehicle = await submit();
-    if (vehicle) nav.navigate("VehiclesList");
+    if (vehicle) nav.goBack();
   };
 
   return (

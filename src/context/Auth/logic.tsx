@@ -3,6 +3,53 @@ import { queryClient } from "@/src/lib/queryClient";
 import { useCallback, useEffect, useState } from "react";
 import { AuthRepository } from "./repository";
 import { AuthState, User } from "./types";
+import {
+    startUserForegroundTracking,
+    stopUserForegroundTracking,
+} from "@/src/services/location/foregroundTracking";
+import * as Location from "expo-location";
+import { Alert, Linking } from "react-native";
+
+async function promptLocationSharingEveryLogin(): Promise<boolean> {
+    // Always show an in-app prompt, since OS prompts might not appear after the first decision.
+    return new Promise((resolve) => {
+        Alert.alert(
+            "Share Location",
+            "Allow location sharing so others can see your initials on Live Tracking (Find My style)?",
+            [
+                { text: "Not now", style: "cancel", onPress: () => resolve(false) },
+                { text: "Allow", onPress: () => resolve(true) },
+            ],
+            { cancelable: true, onDismiss: () => resolve(false) }
+        );
+    });
+}
+
+async function ensureLocationTrackingStarted(): Promise<void> {
+    const current = await Location.getForegroundPermissionsAsync();
+    if (current.status === "granted") {
+        await startUserForegroundTracking();
+        return;
+    }
+
+    const allowedInApp = await promptLocationSharingEveryLogin();
+    if (!allowedInApp) return;
+
+    const requested = await Location.requestForegroundPermissionsAsync();
+    if (requested.status === "granted") {
+        await startUserForegroundTracking();
+        return;
+    }
+
+    Alert.alert(
+        "Location Permission Required",
+        "Location sharing is off. To enable it, open settings and allow Location access.",
+        [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+        ]
+    );
+}
 
 export const useAuthLogic = () => {
     const [state, setState] = useState<AuthState>({
@@ -28,6 +75,10 @@ export const useAuthLogic = () => {
                         isLoading: false,
                         error: null,
                     });
+
+                    // Treat session restore as a login for permission behavior.
+                    // (Required: ask every time someone "logs in".)
+                    ensureLocationTrackingStarted().catch(() => {});
                 } else {
                     setState(prev => ({ ...prev, isLoading: false }));
                 }
@@ -43,6 +94,15 @@ export const useAuthLogic = () => {
             const { token, user } = await AuthRepository.login(email, password);
             await AuthRepository.saveToken(token);
             await AuthRepository.saveUser(user);
+
+            // Ask for location permissions on every login (per requirement).
+            try {
+                await ensureLocationTrackingStarted();
+            } catch (e) {
+                // Don't block login if permissions fail
+                if (__DEV__) console.warn("Location permission/tracking setup failed", e);
+            }
+
             setState({ isAuthenticated: true, token, user, isLoading: false, error: null });
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Login failed";
@@ -61,6 +121,7 @@ export const useAuthLogic = () => {
         } catch (error) {
             console.error("Logout error:", error);
         } finally {
+            stopUserForegroundTracking();
             await AuthRepository.clear();
             queryClient.clear();
             setState({ isAuthenticated: false, token: null, user: null, isLoading: false, error: null });

@@ -39,10 +39,28 @@ export default function TripDetailsScreen({ route, navigation }: any) {
   if (!trip) return null;
 
   const getCMRUrl = () => {
-    if (!trip.cmr_url) return null;
-    if (trip.cmr_url.startsWith("http")) return trip.cmr_url;
-    const base = API_CONFIG.BASE_URL.replace("/api", "");
-    return `${base}${trip.cmr_url.startsWith("/") ? trip.cmr_url : "/" + trip.cmr_url}`;
+    const raw = trip.cmr_url || trip.cmr;
+    if (!raw) return null;
+
+    // Local SQLite mode stores a file URI (file://...) in `cmr`.
+    if (
+      raw.startsWith("http://") ||
+      raw.startsWith("https://") ||
+      raw.startsWith("file://") ||
+      raw.startsWith("content://")
+    ) {
+      return raw;
+    }
+
+    // Seeded placeholder (no real file to download)
+    if (raw.startsWith("seeded://")) return null;
+
+    // If we're running without a backend, there's nowhere to download from.
+    if (API_CONFIG.BASE_URL.startsWith("local://")) return null;
+
+    // Legacy backend relative URL support (when using real API base URL)
+    const base = API_CONFIG.BASE_URL.replace(/\/api\/?$/, "");
+    return `${base}${raw.startsWith("/") ? raw : "/" + raw}`;
   };
 
   const cmrUrl = getCMRUrl();
@@ -55,6 +73,20 @@ export default function TripDetailsScreen({ route, navigation }: any) {
 
     setDownloading(true);
     try {
+      // If the CMR is already a local file, just share/open it directly.
+      if (cmrUrl.startsWith("file://") || cmrUrl.startsWith("content://")) {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(cmrUrl, {
+            dialogTitle: `CMR - ${trip.trip_number}`,
+          });
+          Alert.alert("Success", "CMR ready to share/save.");
+        } else {
+          Alert.alert("Info", "Sharing is not available on this device.");
+        }
+        return;
+      }
+
+      // Otherwise, it's a remote URL (http/https): download then share.
       const token = await AsyncStorage.getItem("AUTH_TOKEN");
       const fileExtension = cmrUrl.split(".").pop()?.split("?")[0] || "jpg";
       const fileName = `CMR_${trip.trip_number}_${Date.now()}.${fileExtension}`;

@@ -1,6 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosClient from '../axiosClient';
 import { enqueueRequest } from '../offline';
+// SDK 54+ deprecates the legacy namespace exports from `expo-file-system`.
+// Use the legacy API explicitly to avoid runtime errors in Expo Go / SDK 54.
+import * as FileSystem from 'expo-file-system/legacy';
 
 export interface Trip {
   id: number;
@@ -229,78 +232,18 @@ export const tripsApi = {
 
   uploadCMR: async (id: number, file: any): Promise<TripResponse> => {
     try {
-      if (__DEV__) {
-        console.log('📤 Uploading CMR:', {
-          tripId: id,
-          file: {
-            uri: file.uri,
-            type: file.type,
-            name: file.name,
-          },
-        });
+      if (!file?.uri) {
+        throw new Error('Invalid file');
       }
 
-      // Use Fetch API instead of axios for better React Native FormData support
-      const formData = new FormData();
-      
-      // Format file for React Native FormData
-      // React Native FormData requires specific format with uri, type, and name
-      formData.append('cmr', {
-        uri: file.uri,
-        type: file.type || 'image/jpeg',
-        name: file.name || 'cmr.jpg',
-      } as any);
-      
-      if (__DEV__) {
-        console.log('📎 FormData file object:', {
-          uri: file.uri,
-          type: file.type || 'image/jpeg',
-          name: file.name || 'cmr.jpg',
-        });
-      }
+      // Local SQLite mode: store the picked file into app storage and save its URI in SQLite.
+      const safeName = (file.name || `cmr-${id}.jpg`).replace(/[^\w.\-]+/g, '_');
+      const dest = `${FileSystem.documentDirectory ?? ''}cmr/${Date.now()}-${safeName}`;
+      await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory ?? ''}cmr`, { intermediates: true });
+      await FileSystem.copyAsync({ from: file.uri, to: dest });
 
-      // Get auth token
-      const token = await AsyncStorage.getItem('AUTH_TOKEN');
-      
-      // Get base URL from axios client config
-      const baseURL = axiosClient.defaults.baseURL;
-      const url = `${baseURL}/driver/trips/${id}/cmr`;
-      
-      if (__DEV__) {
-        console.log('📡 Upload URL:', url);
-      }
-
-      // Use fetch API for file uploads (better React Native support)
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          // Don't set Content-Type - let fetch set it with boundary
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const error: any = new Error(errorData.message || `Upload failed with status ${response.status}`);
-        error.response = {
-          status: response.status,
-          data: errorData,
-        };
-        throw error;
-      }
-
-      const data: TripResponse = await response.json();
-
-      if (__DEV__) {
-        console.log('✅ CMR uploaded successfully:', {
-          trip: data.trip,
-          cmr: data.trip?.cmr,
-          cmr_url: data.trip?.cmr_url,
-        });
-      }
-
-      return data;
+      const response = await axiosClient.post<TripResponse>(`/driver/trips/${id}/cmr`, { cmr: dest });
+      return response.data;
     } catch (error: any) {
       if (__DEV__) {
         console.error('❌ Error uploading CMR:', {
@@ -320,18 +263,16 @@ export const tripsApi = {
   },
 
   uploadCMRByTrip: async (id: number, file: any): Promise<TripResponse> => {
-    const formData = new FormData();
-    formData.append('cmr', file);
-    
-    const response = await axiosClient.post<TripResponse>(
-      `/trips/${id}/cmr`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
+    if (!file?.uri) {
+      throw new Error('Invalid file');
+    }
+
+    const safeName = (file.name || `cmr-${id}.jpg`).replace(/[^\w.\-]+/g, '_');
+    const dest = `${FileSystem.documentDirectory ?? ''}cmr/${Date.now()}-${safeName}`;
+    await FileSystem.makeDirectoryAsync(`${FileSystem.documentDirectory ?? ''}cmr`, { intermediates: true });
+    await FileSystem.copyAsync({ from: file.uri, to: dest });
+
+    const response = await axiosClient.post<TripResponse>(`/trips/${id}/cmr`, { cmr: dest });
     return response.data;
   },
 };

@@ -44,4 +44,21 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
   },
+  zoomControls: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    gap: 10,
+    zIndex: 1000,           // make sure it's on top of the map
+    elevation: 1000,        // needed for Android
+  },
+  zoomButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
 });
