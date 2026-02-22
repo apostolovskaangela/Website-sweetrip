@@ -15,7 +15,7 @@ interface Database {
 
 let dbData: Database | null = null;
 let nextIds: { [key: string]: number } = {};
-const STORAGE_KEY = 'SWEETTRIP_LOCAL_DB_V2';
+const STORAGE_KEY = 'SWEETTRIP_LOCAL_DB_V4';
 
 function hasLocalStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
