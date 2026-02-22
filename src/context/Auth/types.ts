@@ -1,4 +1,3 @@
-// /src/context/Auth/types.ts
 export interface User {
     id: string | number;
     name?: string;

@@ -1,7 +1,10 @@
 import * as SQLite from 'expo-sqlite';
 
-import { CREATE_TABLES_SQL } from './schema';
+import { CREATE_TABLES_SQL, SCHEMA_VERSION } from './schema';
 import { nowIso, toSqlBool } from './utils';
+
+// Bump this when you change `api/db.json` seed data (users/credentials/etc).
+const SEED_VERSION = 3;
 
 type SeedUser = {
   id: number;
@@ -54,7 +57,7 @@ type SeedDbJson = {
   users: SeedUser[];
   vehicles: SeedVehicle[];
   trips: SeedTrip[];
-  trip_stops: SeedTripStop[];
+  trip_stops?: SeedTripStop[];
 };
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -91,11 +94,30 @@ async function isSeeded(db: SQLite.SQLiteDatabase): Promise<boolean> {
   return (row?.cnt ?? 0) > 0;
 }
 
+async function getMeta(db: SQLite.SQLiteDatabase, key: string): Promise<string | null> {
+  try {
+    const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM meta WHERE key = ?', [key]);
+    return row?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function setMeta(db: SQLite.SQLiteDatabase, key: string, value: string): Promise<void> {
+  await db.runAsync('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)', [key, value]);
+}
+
+async function writeVersions(db: SQLite.SQLiteDatabase): Promise<void> {
+  await setMeta(db, 'schema_version', String(SCHEMA_VERSION));
+  await setMeta(db, 'seed_version', String(SEED_VERSION));
+}
+
 async function seedFromJson(db: SQLite.SQLiteDatabase) {
   // Required by the professor: `api/db.json` replaces Laravel seeders.
   // We load it from the JS bundle via require (avoid TS resolveJsonModule issues).
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const seed: SeedDbJson = require('../../../api/db.json');
+  const tripStops: SeedTripStop[] = Array.isArray(seed.trip_stops) ? seed.trip_stops : [];
 
   const ts = nowIso();
   await db.withTransactionAsync(async () => {
@@ -157,7 +179,7 @@ async function seedFromJson(db: SQLite.SQLiteDatabase) {
       );
     }
 
-    for (const s of seed.trip_stops) {
+    for (const s of tripStops) {
       await db.runAsync(
         `INSERT OR REPLACE INTO trip_stops
           (id, trip_id, destination, stop_order, notes, created_at, updated_at)
@@ -168,6 +190,26 @@ async function seedFromJson(db: SQLite.SQLiteDatabase) {
   });
 }
 
+async function resetAndSeed(db: SQLite.SQLiteDatabase): Promise<void> {
+  // Keep it deterministic for local-mode development: drop and re-create from seed.
+  await execBatch(
+    db,
+    `
+    PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS trip_stops;
+    DROP TABLE IF EXISTS trips;
+    DROP TABLE IF EXISTS vehicles;
+    DROP TABLE IF EXISTS users;
+    DROP TABLE IF EXISTS meta;
+    PRAGMA foreign_keys = ON;
+    `
+  );
+
+  await execBatch(db, CREATE_TABLES_SQL);
+  await seedFromJson(db);
+  await writeVersions(db);
+}
+
 export async function initDatabase(): Promise<void> {
   if (initPromise) return initPromise;
 
@@ -176,11 +218,32 @@ export async function initDatabase(): Promise<void> {
     await execBatch(db, CREATE_TABLES_SQL);
 
     const seeded = await isSeeded(db);
-    if (!seeded) {
-      await seedFromJson(db);
+
+    const schemaVersion = await getMeta(db, 'schema_version');
+    const seedVersion = await getMeta(db, 'seed_version');
+
+    // If schema changes, always rebuild. If seed data changes, rebuild in dev so changes apply immediately.
+    const shouldReset =
+      schemaVersion !== String(SCHEMA_VERSION) || (__DEV__ && seedVersion !== String(SEED_VERSION));
+
+    if (!seeded || shouldReset) {
+      await resetAndSeed(db);
+      return;
+    }
+
+    // Backfill meta on older DBs that were seeded before we added it.
+    if (!schemaVersion || !seedVersion) {
+      await writeVersions(db);
     }
   })();
 
   return initPromise;
+}
+
+export async function resetDatabase(): Promise<void> {
+  const db = await getDb();
+  // allow init to run again if callers reset mid-session
+  initPromise = null;
+  await resetAndSeed(db);
 }
 

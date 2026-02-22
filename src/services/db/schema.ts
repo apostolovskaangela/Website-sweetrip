@@ -1,9 +1,14 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 // Minimal schema to replace Laravel backend tables used by the app.
 // Mirrors migrations in `mda/database/migrations/*create_*_table.php` (+ add_location_to_users_table).
 export const CREATE_TABLES_SQL = `
 PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY,

@@ -33,7 +33,7 @@ axiosClient.interceptors.request.use(
     async (config) => {
     try {
       const token = await AsyncStorage.getItem('AUTH_TOKEN');
-      console.log('🔐 AUTH_TOKEN from storage:', token);
+      if (__DEV__) console.log('🔐 AUTH_TOKEN from storage:', token ? `${token.slice(0, 10)}…` : null);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

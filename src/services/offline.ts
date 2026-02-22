@@ -52,9 +52,10 @@ export async function processQueue(limit = 10) {
       };
       await axiosClient.request(config);
       if (__DEV__) console.log('✅ Synced offline request', item.id, item.method, item.url);
-    } catch (err) {
+    } catch (err: unknown) {
       // Keep the item for later retry
-      if (__DEV__) console.warn('⏳ Failed to sync request, will retry later', item.id, err?.message || err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (__DEV__) console.warn('⏳ Failed to sync request, will retry later', item.id, msg);
       remaining.push(item);
     }
   }

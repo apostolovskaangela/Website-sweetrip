@@ -2,9 +2,9 @@
   "users": [
     {
       "id": 1,
-      "name": "CEO",
-      "email": "ceo@example.com",
-      "password": "password",
+      "name": "Cengis",
+      "email": "info@mdatransport.se",
+      "password": "Mdatransport123!",
       "role_id": 1,
       "manager_id": null,
       "last_latitude": null,
@@ -13,9 +13,9 @@
     },
     {
       "id": 2,
-      "name": "Jovan (Manager)",
-      "email": "jovan@example.com",
-      "password": "123123123",
+      "name": "Jovan",
+      "email": "operations@mdatransport.se",
+      "password": "Mdatransport123@",
       "role_id": 2,
       "manager_id": null,
       "last_latitude": null,
@@ -24,9 +24,9 @@
     },
     {
       "id": 3,
-      "name": "Kenan (Manager)",
-      "email": "kenan@example.com",
-      "password": "123123123",
+      "name": "Kenan",
+      "email": "info@bihholding.se",
+      "password": "Mdatransport123@",
       "role_id": 2,
       "manager_id": null,
       "last_latitude": null,
@@ -37,7 +37,7 @@
       "id": 4,
       "name": "Admin",
       "email": "admin@example.com",
-      "password": "password",
+      "password": "adminAdmin1!",
       "role_id": 3,
       "manager_id": null,
       "last_latitude": null,
@@ -46,9 +46,9 @@
     },
     {
       "id": 5,
-      "name": "Angelique (Driver)",
-      "email": "angelique@example.com",
-      "password": "password",
+      "name": "Angelique",
+      "email": "angelique@driver.com",
+      "password": "angeliqueDriver1!",
       "role_id": 4,
       "manager_id": 2,
       "last_latitude": null,
@@ -57,9 +57,9 @@
     },
     {
       "id": 6,
-      "name": "Nellie (Driver)",
-      "email": "nellie@example.com",
-      "password": "password",
+      "name": "Nellie",
+      "email": "nellie@driver.com",
+      "password": "nellieDriver1!",
       "role_id": 4,
       "manager_id": 2,
       "last_latitude": null,
@@ -68,9 +68,86 @@
     },
     {
       "id": 7,
-      "name": "Embla (Driver)",
-      "email": "embla@example.com",
-      "password": "password",
+      "name": "Embla",
+      "email": "embla@driver.com",
+      "password": "emblaDriver1!",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 8,
+      "name": "Sokol",
+      "email": "sokol@driver.com",
+      "password": "sokolDriver1!",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 9,
+      "name": "Srdzan",
+      "email": "srdzan@driver.com",
+      "password": "srdzanDriver1!",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 10,
+      "name": "Ingemar",
+      "email": "ingemar@driver.com",
+      "password": "ingemarDriver1!",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 11,
+      "name": "Fei",
+      "email": "fei@driver.com",
+      "password": "feiDriver1!",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 12,
+      "name": "Troels",
+      "email": "troels@driver.com",
+      "password": "troelsDriver1!",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 13,
+      "name": "Alex",
+      "email": "alex@driver.com",
+      "password": "alexDriver1!",
+      "role_id": 4,
+      "manager_id": 3,
+      "last_latitude": null,
+      "last_longitude": null,
+      "last_location_at": null
+    },
+    {
+      "id": 14,
+      "name": "Janne",
+      "email": "janne@driver.com",
+      "password": "janneDriver1!",
       "role_id": 4,
       "manager_id": 3,
       "last_latitude": null,
@@ -81,104 +158,75 @@
   "vehicles": [
     {
       "id": 1,
-      "registration_number": "SK-101-AA",
-      "notes": "Assigned to Manager 2",
+      "registration_number": "GPT29R",
+      "notes": "/",
       "is_active": true,
       "manager_id": 2
     },
     {
       "id": 2,
-      "registration_number": "SK-202-BB",
-      "notes": "Assigned to Manager 2",
+      "registration_number": "WAS21M",
+      "notes": "/",
       "is_active": true,
       "manager_id": 2
     },
     {
       "id": 3,
-      "registration_number": "SK-303-CC",
-      "notes": "Assigned to Manager 3",
+      "registration_number": "ZBP12H",
+      "notes": "/",
       "is_active": true,
-      "manager_id": 3
+      "manager_id": 2
+    },
+    {
+      "id": 4,
+      "registration_number": "BZL66G",
+      "notes": "/",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 5,
+      "registration_number": "TBM87T",
+      "notes": "/",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 6,
+      "registration_number": "PHA15W",
+      "notes": "/",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 7,
+      "registration_number": "MCP08U",
+      "notes": "/",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 8,
+      "registration_number": "NCM87N",
+      "notes": "/",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 9,
+      "registration_number": "CXG45S",
+      "notes": "/",
+      "is_active": true,
+      "manager_id": 2
+    },
+    {
+      "id": 10,
+      "registration_number": "ERA28Z",
+      "notes": "/",
+      "is_active": true,
+      "manager_id": 2
     }
   ],
-  "trips": [
-    {
-      "id": 1,
-      "trip_number": "TRIP-001",
-      "vehicle_id": 1,
-      "driver_id": 5,
-      "a_code": "A123",
-      "destination_from": "Skopje",
-      "destination_to": "Tetovo",
-      "status": "not_started",
-      "mileage": 45.5,
-      "cmr": null,
-      "driver_description": "Deliver on time",
-      "admin_description": null,
-      "trip_date": "2026-02-01",
-      "invoice_number": "INV-001",
-      "amount": 250.0,
-      "created_by": 2
-    },
-    {
-      "id": 2,
-      "trip_number": "TRIP-002",
-      "vehicle_id": 2,
-      "driver_id": 6,
-      "a_code": null,
-      "destination_from": "Skopje",
-      "destination_to": "Veles",
-      "status": "in_process",
-      "mileage": 54.0,
-      "cmr": null,
-      "driver_description": null,
-      "admin_description": "Handle fragile cargo",
-      "trip_date": "2026-02-01",
-      "invoice_number": null,
-      "amount": null,
-      "created_by": 2
-    },
-    {
-      "id": 3,
-      "trip_number": "TRIP-003",
-      "vehicle_id": 3,
-      "driver_id": 7,
-      "a_code": "B555",
-      "destination_from": "Tetovo",
-      "destination_to": "Ohrid",
-      "status": "completed",
-      "mileage": 133.2,
-      "cmr": "seeded://cmr/TRIP-003",
-      "driver_description": null,
-      "admin_description": null,
-      "trip_date": "2026-01-15",
-      "invoice_number": "INV-015",
-      "amount": 800.0,
-      "created_by": 3
-    }
-  ],
-  "trip_stops": [
-    {
-      "id": 1,
-      "trip_id": 1,
-      "destination": "Gostivar",
-      "stop_order": 1,
-      "notes": "Quick stop"
-    },
-    {
-      "id": 2,
-      "trip_id": 3,
-      "destination": "Kicevo",
-      "stop_order": 1,
-      "notes": null
-    },
-    {
-      "id": 3,
-      "trip_id": 3,
-      "destination": "Struga",
-      "stop_order": 2,
-      "notes": null
-    }
-  ]
+  "trips": [],
+  "trip_stops": []
 }
-

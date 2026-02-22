@@ -76,7 +76,7 @@ export default function VehicleList() {
       <Screen accessibilityLabel="Vehicles error">
         <View style={styles.errorCard}>
           <Text style={styles.errorText}>{error}</Text>
-          <PrimaryButton onPress={reload} accessibilityLabel="Retry loading vehicles">
+          <PrimaryButton onPress={() => reload()} accessibilityLabel="Retry loading vehicles">
             Retry
           </PrimaryButton>
         </View>

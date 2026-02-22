@@ -8,11 +8,14 @@ import { VehicleStatus } from "@/src/components/RecentVehicles";
 import { Screen } from "@/src/components/ui/Screen";
 import { Text, ActivityIndicator, useTheme } from "react-native-paper";
 import { makeStyles } from "./styles";
+import { useAuth } from "@/src/hooks/useAuth";
 
 export const Dashboard = () => {
   const { stats, recentTrips, vehicles, loading } = useDashboardLogic();
   const theme = useTheme();
   const styles = useMemo(() => makeStyles(theme), [theme]);
+  const { user } = useAuth();
+  const isDriver = user?.roles?.includes("driver") ?? false;
 
   if (loading) {
     return (
@@ -73,7 +76,7 @@ export const Dashboard = () => {
 
       <View>
         <RecentTrips trips={recentTrips} />
-        <VehicleStatus vehicles={vehicles} />
+        {!isDriver && <VehicleStatus vehicles={vehicles} />}
       </View>
     </Screen>
   );

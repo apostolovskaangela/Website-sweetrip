@@ -37,12 +37,12 @@ export default function Welcome({ navigation }: Props) {
         <FadeIn fromY={18} durationMs={280} style={styles.fadeButtonWrapper}>
           <PrimaryButton
             onPress={() => navigation.navigate("Login")}
-            accessibilityLabel="Start free trial"
+            accessibilityLabel="Login"
             accessibilityHint="Navigates to the login screen"
             style={[styles.button, styles.buttonCentered]}
             textColor="#0b1220"
           >
-            Start Free Trial
+            Login
           </PrimaryButton>
         </FadeIn>
       </View>

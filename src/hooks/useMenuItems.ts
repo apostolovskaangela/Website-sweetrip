@@ -13,7 +13,7 @@ const BASE_MENU: MenuItem[] = [
   { name: "Dashboard", label: "Dashboard", icon: "view-dashboard" },
   { name: "Trips", label: "Trips", icon: "map-marker-path" },
   { name: "Vehicles", label: "Vehicles", icon: "truck" },
-  { name: "LiveTracking", label: "Live Tracking", icon: "map-marker-radius" },
+  // { name: "LiveTracking", label: "Live Tracking", icon: "map-marker-radius" },
 ];
 
 export function useMenuItems() {

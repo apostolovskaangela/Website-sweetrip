@@ -1,6 +1,6 @@
 import OfflineQueueScreen from '@/src/components/OfflineQueueScreen';
 import { Dashboard } from '@/src/screens/Dashboard';
-import { LiveTracking } from '@/src/screens/LiveTracking';
+// import { LiveTracking } from '@/src/screens/LiveTracking';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createDrawerNavigator, DrawerNavigationProp } from '@react-navigation/drawer';
 import React from 'react';
@@ -26,20 +26,22 @@ const getHeaderTitle = (routeName: keyof MainDrawerParamList) => {
     Dashboard: 'Dashboard',
     Trips: 'Trips',
     Vehicles: 'Vehicles',
-    LiveTracking: 'Live Tracking',
+    // LiveTracking: 'Live Tracking',
+    OfflineQueue: 'Offline Queue',
   };
   return titles[routeName] ?? routeName;
 };
 
 /** Utility: handle header title press for nested navigation */
 const handleHeaderTitlePress = (navigation: DrawerNavigationProp<MainDrawerParamList>, routeName: keyof MainDrawerParamList) => {
-  const nestedScreens: Record<string, { screen: string }> = {
-    Vehicles: { screen: 'VehiclesList' },
-    Trips: { screen: 'TripsList' },
-  };
-
-  if (nestedScreens[routeName]) {
-    navigation.navigate(routeName, nestedScreens[routeName]);
+  // Only some Drawer screens are nested stack navigators.
+  if (routeName === 'Vehicles') {
+    navigation.navigate('Vehicles', { screen: 'VehiclesList' });
+    return;
+  }
+  if (routeName === 'Trips') {
+    navigation.navigate('Trips', { screen: 'TripsList' });
+    return;
   }
 };
 
@@ -95,7 +97,7 @@ export const MainNavigator: React.FC = () => {
       <Drawer.Screen name="Trips" component={TripsNavigator} />
       <Drawer.Screen name="Vehicles" component={VehiclesNavigator} />
       <Drawer.Screen name="OfflineQueue" component={OfflineQueueScreen} />
-      <Drawer.Screen name="LiveTracking" component={LiveTracking} />
+      {/* <Drawer.Screen name="LiveTracking" component={LiveTracking} /> */}
     </Drawer.Navigator>
   );
 };

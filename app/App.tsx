@@ -1,51 +1,16 @@
 import { platformSelect } from "@/src/config/platform";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
-import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import Login from "@/src/components/Login";
 import { AuthProvider } from "@/src/context/Auth";
 import { QueryProvider } from "@/src/lib/QueryProvider";
-import { MainNavigator } from "@/src/navigation/MainNavigator";
-import { RootStackParamList } from "@/src/navigation/types";
-import Welcome from "@/src/screens/Welcome";
 import Offline from '@/src/services/offline';
 import { useEffect } from "react";
 import { AppState } from 'react-native';
 import { initDatabase } from '@/src/services/db';
-import { useAppNavigatorLogic } from "./logic";
 import { styles } from "./styles";
 import { ThemeProvider } from "@/src/theme/ThemeProvider";
-
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-function Loading() {
-  return (
-    <View style={styles.loaderContainer}>
-      <ActivityIndicator size="large" color="#007AFF" />
-    </View>
-  );
-}
-
-function AppNavigator() {
-  const { isLoading, isAuthenticated } = useAppNavigatorLogic();
-
-  if (isLoading) return <Loading />;
-
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isAuthenticated ? (
-        <Stack.Screen name="Dashboard" component={MainNavigator} />
-      ) : (
-        <>
-          <Stack.Screen name="Welcome" component={Welcome} />
-          <Stack.Screen name="Login" component={Login} />
-        </>
-      )}
-    </Stack.Navigator>
-  );
-}
+import { AppNavigator } from "@/src/navigation/AppNavigator";
 
 export default function App() {
   useEffect(() => {
