@@ -1,4 +1,3 @@
-// /src/context/Auth/repository.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authApi } from "@/src/services/api";
 import { User } from "./types";

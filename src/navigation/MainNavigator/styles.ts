@@ -1,6 +1,7 @@
 import { safeAreaBottomInset } from "@/src/config/platform";
 import { cardShadow, headerShadow } from "@/src/utils/platformStyles";
 import { StyleSheet } from "react-native";
+import type { MD3Theme } from "react-native-paper";
 
 export const styles = StyleSheet.create({
   tabBar: {
@@ -110,3 +111,34 @@ export const styles = StyleSheet.create({
   },
   
 });
+
+/**
+ * Theme-aware colors for the drawer/header.
+ * We keep layout in `styles` and apply colors dynamically in components.
+ */
+export const NAV_DEFAULTS = {
+  activeIndicatorOpacity: 0.12,
+} as const;
+
+export const makeThemedStyles = (theme: MD3Theme) =>
+  StyleSheet.create({
+    headerStyle: {
+      backgroundColor: theme.colors.elevation.level1,
+      ...headerShadow(),
+    },
+    headerTitleText: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: theme.colors.onSurface,
+    },
+    sceneContainerStyle: {
+      backgroundColor: theme.colors.background,
+    },
+    drawerStyle: {
+      backgroundColor: theme.colors.background,
+    },
+  });
+
+export function getDrawerActiveBackgroundColor() {
+  return `rgba(10,126,164,${NAV_DEFAULTS.activeIndicatorOpacity})`;
+}

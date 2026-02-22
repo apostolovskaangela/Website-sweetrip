@@ -1,4 +1,6 @@
 import { Dimensions, StyleSheet } from "react-native";
+import type { MD3Theme } from "react-native-paper";
+import { radius, space, type } from "@/src/theme/tokens";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -136,4 +138,94 @@ export const styles = StyleSheet.create({
   statusPicker: {
     width: "100%",
   },
+  card: {
+    backgroundColor: "#fff",
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 16,
+  }
 });
+
+export const makeThemedStyles = (theme: MD3Theme) =>
+  StyleSheet.create({
+    contentFade: {
+      marginTop: space.lg,
+    },
+    title: {
+      fontSize: type.h1,
+      fontWeight: "900",
+      color: theme.colors.onBackground,
+    },
+    subtitle: {
+      marginTop: 6,
+      color: theme.colors.onSurfaceVariant,
+    },
+    sectionTitle: {
+      fontSize: type.h2,
+      fontWeight: "900",
+      color: theme.colors.onBackground,
+      marginBottom: 10,
+    },
+    detailsCard: {
+      backgroundColor: theme.colors.elevation.level1,
+      borderColor: theme.colors.outline,
+      borderWidth: 1,
+      borderRadius: radius.lg,
+      padding: 14,
+      marginBottom: space.lg,
+    },
+    detailsHeader: {
+      fontWeight: "900",
+      color: theme.colors.onSurface,
+      marginBottom: 8,
+    },
+    detailsLine: {
+      color: theme.colors.onSurfaceVariant,
+    },
+    stopCard: {
+      padding: 12,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      backgroundColor: theme.colors.elevation.level1,
+      marginBottom: 10,
+    },
+    stopText: {
+      color: theme.colors.onSurface,
+    },
+    cmrTitle: {
+      fontSize: type.h2,
+      fontWeight: "900",
+      color: theme.colors.onBackground,
+      marginTop: space.lg,
+    },
+    cmrActionsRow: {
+      flexDirection: "row",
+      marginTop: 8,
+      justifyContent: "center",
+    },
+    cmrActionLeft: {
+      flex: 1,
+      marginRight: 10,
+    },
+    cmrActionRight: {
+      flex: 1,
+    },
+    statusPickerContainer: {
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      borderRadius: radius.md,
+      overflow: "hidden",
+      backgroundColor: theme.colors.elevation.level1,
+      marginTop: 8,
+      marginBottom: 8,
+    },
+    buttonMarginBottom: {
+      marginBottom: space.md,
+    },
+    buttonMarginTop: {
+      marginTop: space.md,
+    },
+  });

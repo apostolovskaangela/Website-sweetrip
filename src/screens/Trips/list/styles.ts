@@ -1,27 +1,70 @@
 import { StyleSheet } from "react-native";
+import type { MD3Theme } from "react-native-paper";
+import { radius, space, type } from "@/src/theme/tokens";
 
-export const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  title: { fontSize: 24, fontWeight: "700" },
-  subtitle: { color: "#6b7280" },
-  createBtn: {
-    backgroundColor: "hsl(217,91%,35%)",
-    padding: 10,
-    borderRadius: 8,
-  },
-  createText: { color: "#fff", fontWeight: "600", padding: 4 },
-  card: {
-    backgroundColor: "#fff",
-    padding: 14,
-    marginBottom: 12,
-    borderRadius: 10,
-  },
-  route: { fontSize: 16, fontWeight: "600" },
-  status: { marginVertical: 6, color: "#2563eb" },
-  errorText: { color: "red", marginBottom: 10 },
-});
+export const makeStyles = (theme: MD3Theme) =>
+  StyleSheet.create({
+    loading: {
+      flex: 1,
+    },
+    headerRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-end",
+      marginBottom: space.lg,
+    },
+    headerLeft: {
+      flex: 1,
+    },
+    title: {
+      fontSize: type.h1,
+      fontWeight: "800",
+      color: theme.colors.onBackground,
+    },
+    subtitle: {
+      marginTop: 2,
+      color: theme.colors.onSurfaceVariant,
+    },
+    newButtonContent: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    },
+    errorCard: {
+      padding: 12,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      backgroundColor: theme.colors.elevation.level1,
+      marginBottom: space.md,
+    },
+    errorText: {
+      color: theme.colors.error,
+    },
+    listContent: {
+      paddingBottom: 96
+    },
+    tripCard: {
+      backgroundColor: theme.colors.elevation.level1,
+      borderColor: theme.colors.outline,
+      borderWidth: 1,
+      borderRadius: radius.lg,
+      padding: 14,
+      marginBottom: 12,
+    },
+    tripRoute: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: theme.colors.onSurface,
+    },
+    tripStatus: {
+      marginTop: 6,
+      color: theme.colors.primary,
+      fontWeight: "700",
+    },
+    tripMeta: {
+      marginTop: 8,
+    },
+    tripMetaText: {
+      color: theme.colors.onSurfaceVariant,
+    },
+  });

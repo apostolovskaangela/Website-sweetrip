@@ -1,3 +1,4 @@
+import { useTripMutations } from "@/src/hooks/queries";
 import { tripsApi } from "@/src/services/api";
 import { NotificationManager } from "@/src/services/NotificationManager";
 import { useEffect, useState } from "react";
@@ -23,7 +24,8 @@ export type CreateTripForm = {
   status: "not_started" | "started" | "in_process" | "completed";
 };
 
-export function useTripCreateLogic(navigation: any) {
+export function useTripCreateLogic() {
+  const { createTrip } = useTripMutations();
   const [drivers, setDrivers] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
 
@@ -72,7 +74,7 @@ export function useTripCreateLogic(navigation: any) {
     }
 
     try {
-      const response = await tripsApi.create({
+      const response = await createTrip({
         ...form,
         vehicle_id: Number(form.vehicle_id),
         driver_id: Number(form.driver_id),

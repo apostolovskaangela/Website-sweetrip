@@ -5,7 +5,7 @@ export const socketService = {
     if (socket) return socket;
 
     socket = new WebSocket(
-      `ws://192.168.1.103:8080/app/${token}`
+      `ws://local://api/${token}`
     );
 
     socket.onopen = () => {

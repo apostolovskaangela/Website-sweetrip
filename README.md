@@ -1,36 +1,53 @@
-# Welcome to your Expo app 👋
+# SweetTrip (Sweetrip) — Fleet Management (React Native / Expo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+SweetTrip is a fleet management mobile app where managers create and assign trips to drivers, drivers can view and update their trips, and all authorized users can track live locations.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Role-aware navigation**: menu items adapt to the logged-in user’s role (see `src/roles/` + `src/hooks/useMenuItems.ts`)
+- **Trips & Vehicles CRUD**: list/create/edit/details flows with server-state caching (React Query)
+- **Live tracking**:
+  - Drivers can share location updates (foreground tracking)
+  - Managers can view driver positions on the map (Live Tracking screen)
+- **Offline support**:
+  - Mutations can be queued to local storage and synced later (see `src/services/offline.ts`)
+  - Local SQLite DB is initialized on first run (see `src/services/db/`)
+- **Real-time scaffolding**:
+  - WebSocket service exists (`src/services/realtime/socket.ts`)
+  - Driver-side WS tracking sender exists (`src/services/location/driverTracking.ts`)
+- **Accessibility**:
+  - Key entry points and navigation buttons include labels/roles and keyboard-friendly flow
+- **Dark/Light theme**:
+  - React Native Paper MD3 theme is provided globally (see `src/theme/paperTheme.ts`)
+   
+## Tech stack
 
-   ```bash
-   npm install
-   ```
+- **Expo** + **React Native**
+- **React Navigation** (stack + drawer)
+- **React Query (@tanstack/react-query)** for server-state caching, retries, and invalidation
+- **React Native Paper** for UI components with MD3 theming
+- **Axios** for HTTP
+- **expo-location** for location permissions + tracking
+- **expo-sqlite** for local persistence
 
-2. Start the app
+## Project structure (high-level)
 
-   ```bash
-   npx expo start
-   ```
+- `app/App.tsx`: app root (providers, offline sync bootstrap, SQLite init)
+- `src/context/Auth/`: Auth state + actions (Context API + repository pattern)
+- `src/services/api/`: API clients (trips/vehicles/users/auth)
+- `src/hooks/queries/`: React Query hooks (queries + optimistic mutation patterns)
+- `src/services/offline.ts`: offline queue + background sync
+- `src/services/location/`: location tracking utilities
+- `src/services/realtime/`: WebSocket client
+- `src/screens/`: screen modules (UI + `logic.tsx` + `styles.ts`)
+- `docs/`: API + performance notes
 
-In the output, you'll find options to open the app in a
+## Setup
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1) Install dependencies
 
 ```bash
-npm run reset-project
+npm install
 ```
 
 This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
@@ -46,54 +63,57 @@ To learn more about developing your project with Expo, look at the following res
 
 Join our community of developers creating universal apps.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 3) (Optional) Configure WebSocket URL
 
-## Project-specific notes
+The WebSocket URL is currently hardcoded in `src/services/realtime/socket.ts`. If your backend WS host/port differs, update it there.
 
-- The app communicates with a backend API. When running the backend locally, set the API base URL in `src/config/api.ts` to your machine's IPv4 address (not `localhost`). Example:
+### 4) Start the app
 
-```js
-export const API_CONFIG = { BASE_URL: 'http://192.168.1.100:8000/api' };
+```bash
+npx expo start
 ```
 
-- Use `ipconfig` (Windows) or `ifconfig` (Mac/Linux) to find your machine's IPv4 address and replace the example above.
-
 ## Testing
-
-Unit tests are configured with Jest and use the `jest-expo` preset.
-
-- Run unit tests:
 
 ```bash
 npm test
 ```
 
-- Run tests with coverage (coverage thresholds set to 70%):
+Coverage:
 
 ```bash
 npm run test:coverage
 ```
 
-- Integration tests (templates provided):
+Integration test config (templates included):
 
 ```bash
 npm run test:integration
 ```
 
-If `npm install` fails with peer dependency resolution errors (common when React versions mismatch with some test libraries), either run:
+If `npm install` fails with peer dependency errors, run:
 
 ```bash
 npm install --legacy-peer-deps
 ```
 
-or use the project-default behavior (this repo includes a `.npmrc` that enables `legacy-peer-deps`), then run `npm install` again.
+## Login credentials
 
-## Integration & E2E
+- **Managers**: 
+  - Email: jovan@example.com Password:123123123
+  - Email: kenan@example.com Password:123123123
+- **Drivers**:
+  - Email: angelique@example.com Password:password
+  - Email: nellie@example.com Password:password
+- **CEO**:
+  - Email: ceo@example.com Password:password
+- **Admin**:
+  - Email: admin@example.com Password:password
 
-- This repo contains scaffolding for integration and E2E tests. We recommend using Detox for native e2e or Playwright for web. See `e2e/README.md` for guidance on setting up Detox.
 
-## API docs
+## Docs
 
-- A minimal API reference is available at `docs/API.md`. For production-grade documentation, keep an OpenAPI/Swagger spec in the backend and export it here.
+- API reference: `docs/API.md`
+- Performance notes: `docs/PERFORMANCE.md`
+- E2E scaffolding: `e2e/README.md`
 

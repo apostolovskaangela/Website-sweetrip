@@ -1,10 +1,12 @@
-import { listVirtualizationConfig } from "@/src/lib/listConfig";
 import { useNavigation } from "@react-navigation/native";
-import React, { useCallback } from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useMemo } from "react";
+import { TouchableOpacity, View } from "react-native";
 import type { Vehicle } from "../types";
 import { getVehicleStatusBadge } from "./logic";
-import { styles } from "./styles";
+import { makeStyles, statusBadgeBg, statusTextColor } from "./styles";
+import { Text, useTheme } from "react-native-paper";
+import { useAuth } from "@/src/hooks/useAuth";
+import { RoleFactory } from "@/src/roles";
 
 interface VehicleStatusProps {
   vehicles: Vehicle[];
@@ -12,67 +14,75 @@ interface VehicleStatusProps {
 
 export const VehicleStatus: React.FC<VehicleStatusProps> = ({ vehicles = [] }) => {
   const navigation = useNavigation<any>();
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
+  const { user } = useAuth();
+  const roleHandler = RoleFactory.createFromUser({ roles: user?.roles });
+  const canViewVehicles = roleHandler?.canViewVehicles?.() ?? false;
 
-  const keyExtractor = useCallback((item: Vehicle) => item.id.toString(), []);
-  const renderItem = useCallback(
-    ({ item }: { item: Vehicle }) => (
-      <RecentVehicleCard
-        item={item}
-        onPress={() =>
-          navigation.navigate("Vehicles", {
-            screen: "VehicleDetails",
-            params: { id: item.id },
-          })
-        }
-      />
-    ),
+  const onPressVehicle = useCallback(
+    (id: number) =>
+      navigation.navigate("Vehicles", {
+        screen: "VehicleDetails",
+        params: { id },
+      }),
     [navigation]
   );
 
   if (!vehicles.length) {
-    return <Text style={{ margin: 8 }}>No vehicles available</Text>;
+    return <Text style={styles.emptyText}>No vehicles available</Text>;
   }
 
   return (
-    <View style={{ marginVertical: 8 }}>
+    <View style={styles.section}>
       <Text style={styles.sectionTitle}>Vehicle Status</Text>
-      <FlatList
-        data={vehicles}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        {...listVirtualizationConfig}
-      />
+      {vehicles.map((v) => (
+        <RecentVehicleCard
+          key={v.id}
+          item={v}
+          onPress={canViewVehicles ? () => onPressVehicle(v.id) : undefined}
+        />
+      ))}
     </View>
   );
 };
 
 interface RecentVehicleCardProps {
   item: Vehicle;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 const RecentVehicleCard = React.memo<RecentVehicleCardProps>(function RecentVehicleCard({
   item,
   onPress,
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const badge = getVehicleStatusBadge(item);
+  const CardWrapper: any = onPress ? TouchableOpacity : View;
+
   return (
-    <TouchableOpacity onPress={onPress}>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          {item.registration_number ?? "No registration"}
-        </Text>
+    <CardWrapper
+      onPress={onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={`Vehicle ${item.registration_number ?? "No registration"}`}
+      accessibilityHint={onPress ? "Opens vehicle details" : "Vehicles are view-only for your role"}
+    >
+      <View
+        style={[styles.card, !onPress && styles.cardDisabled]}
+      >
+        <Text style={styles.cardTitle}>{item.registration_number ?? "No registration"}</Text>
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: badge.backgroundColor },
+            statusBadgeBg(badge.backgroundColor),
           ]}
         >
-          <Text style={[styles.statusText, { color: badge.textColor }]}>
+          <Text style={[styles.statusText, statusTextColor(badge.textColor)]}>
             {badge.label}
           </Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </CardWrapper>
   );
 });

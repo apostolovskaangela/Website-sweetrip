@@ -1,4 +1,3 @@
-// /src/context/Auth/types.ts
 export interface User {
     id: string | number;
     name?: string;
@@ -17,7 +16,6 @@ export interface AuthState {
 
 export interface AuthContextType extends AuthState {
     login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, name?: string) => Promise<void>;
     logout: () => Promise<void>;
     clearError: () => void;
     refreshUser: () => Promise<void>;

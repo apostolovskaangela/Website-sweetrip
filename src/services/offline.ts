@@ -52,9 +52,10 @@ export async function processQueue(limit = 10) {
       };
       await axiosClient.request(config);
       if (__DEV__) console.log('✅ Synced offline request', item.id, item.method, item.url);
-    } catch (err) {
+    } catch (err: unknown) {
       // Keep the item for later retry
-      if (__DEV__) console.warn('⏳ Failed to sync request, will retry later', item.id, err?.message || err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (__DEV__) console.warn('⏳ Failed to sync request, will retry later', item.id, msg);
       remaining.push(item);
     }
   }
@@ -62,6 +63,31 @@ export async function processQueue(limit = 10) {
   // append any unprocessed items beyond the slice + those that failed
   const rest = queue.slice(limit).concat(remaining);
   await saveQueue(rest);
+}
+
+export async function processQueueItem(id: string) {
+  const queue = await getQueue();
+  const idx = queue.findIndex((q) => q.id === id);
+  if (idx < 0) return false;
+
+  const item = queue[idx];
+  try {
+    const config: any = {
+      method: item.method,
+      url: item.url,
+      data: item.body,
+      headers: item.headers || {},
+    };
+    await axiosClient.request(config);
+    if (__DEV__) console.log('✅ Synced offline request', item.id, item.method, item.url);
+    const next = queue.filter((q) => q.id !== id);
+    await saveQueue(next);
+    return true;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (__DEV__) console.warn('⏳ Failed to sync request, will retry later', item.id, msg);
+    return false;
+  }
 }
 
 let syncInterval: NodeJS.Timeout | null = null;
@@ -90,6 +116,7 @@ export async function clearQueue() {
 export default {
   enqueueRequest,
   processQueue,
+  processQueueItem,
   startBackgroundSync,
   stopBackgroundSync,
   clearQueue,

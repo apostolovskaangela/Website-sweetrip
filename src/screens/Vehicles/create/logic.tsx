@@ -1,12 +1,11 @@
 import { useState } from "react";
 
 import { NotificationManager } from "@/src/services/NotificationManager";
-import { VehicleRepository } from "./repository";
+import { useVehicleMutations } from "@/src/hooks/queries";
 import { VehicleCreateRequest } from "../types";
 
-const repo = new VehicleRepository();
-
 export function useCreateVehicle() {
+  const { createVehicle } = useVehicleMutations();
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -34,7 +33,7 @@ export function useCreateVehicle() {
     };
 
     try {
-      const newVehicle = await repo.create(payload);
+      const newVehicle = await createVehicle(payload);
 
       // Notify assigned driver if any
       if (newVehicle.driver_id != null) {

@@ -1,35 +1,38 @@
-import React from "react";
-import { ScrollView, View, Text, ActivityIndicator } from "react-native";
+import React, { useMemo } from "react";
+import { View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { styles } from "./styles";
 import { StatCard } from "@/src/components/StatCard";
 import { useDashboardLogic } from "./logic";
 import { RecentTrips } from "@/src/components/RecentTrips";
 import { VehicleStatus } from "@/src/components/RecentVehicles";
+import { Screen } from "@/src/components/ui/Screen";
+import { Text, ActivityIndicator, useTheme } from "react-native-paper";
+import { makeStyles } from "./styles";
+import { useAuth } from "@/src/hooks/useAuth";
 
 export const Dashboard = () => {
   const { stats, recentTrips, vehicles, loading } = useDashboardLogic();
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
+  const { user } = useAuth();
+  const isDriver = user?.roles?.includes("driver") ?? false;
 
   if (loading) {
     return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        <ActivityIndicator size="large" color="#001F3F" />
-      </View>
+      <Screen accessibilityLabel="Dashboard loading">
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-    >
+    <Screen scroll accessibilityLabel="Dashboard">
       <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
+        <Text variant="headlineMedium" style={styles.title}>
+          Dashboard
+        </Text>
         <Text style={styles.subtitle}>
           Monitor your fleet operations in real-time
         </Text>
@@ -66,15 +69,15 @@ export const Dashboard = () => {
 
         <StatCard
           title="Efficiency"
-          value={`${stats.efficiency}%`}
+          value = {`${(stats.efficiency ?? 0).toFixed(2)}%`}
           icon={<MaterialCommunityIcons name="trending-up" size={24} />}
         />
       </View>
 
       <View>
         <RecentTrips trips={recentTrips} />
-        <VehicleStatus vehicles={vehicles} />
+        {!isDriver && <VehicleStatus vehicles={vehicles} />}
       </View>
-    </ScrollView>
+    </Screen>
   );
 };

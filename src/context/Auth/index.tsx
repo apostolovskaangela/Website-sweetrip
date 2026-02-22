@@ -1,4 +1,3 @@
-// /src/context/Auth/index.tsx
 import React, { createContext, useMemo } from "react";
 import { useAuthLogic } from "./logic";
 import { AuthContextType } from "./types";
@@ -6,19 +5,18 @@ import { AuthContextType } from "./types";
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { state, login, register, logout, clearError, refreshUser, updateUser } = useAuthLogic();
+    const { state, login, logout, clearError, refreshUser, updateUser } = useAuthLogic();
 
     const value = useMemo<AuthContextType>(
         () => ({
             ...state,
             login,
-            register,
             logout,
             clearError,
             refreshUser,
             updateUser,
         }),
-        [state, login, register, logout, clearError, refreshUser, updateUser]
+        [state, login, logout, clearError, refreshUser, updateUser]
     );
 
     return (

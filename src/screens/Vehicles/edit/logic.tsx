@@ -3,6 +3,7 @@ import { NotificationManager } from "@/src/services/NotificationManager";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { VehiclesStackParamList } from "@/src/navigation/VehiclesNavigator";
 import { VehicleForm, VehicleRepository } from "./repository";
+import { useVehicleMutations } from "@/src/hooks/queries";
 
 interface UseEditVehicleProps {
   id: number;
@@ -10,6 +11,7 @@ interface UseEditVehicleProps {
 }
 
 export function useEditVehicle({ id, navigation }: UseEditVehicleProps) {
+  const { updateVehicle } = useVehicleMutations();
   // Memoize repository so its reference is stable across renders
   const repo = useMemo(() => new VehicleRepository(), []);
 
@@ -57,7 +59,7 @@ export function useEditVehicle({ id, navigation }: UseEditVehicleProps) {
     setLoading(true);
     setError(null);
     try {
-      const updated = await repo.update(id, form);
+      const updated = await updateVehicle({ id, data: form });
 
       if (updated.driver_id) {
         NotificationManager.getInstance().notifyDriver(

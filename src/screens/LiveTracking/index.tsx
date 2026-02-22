@@ -1,31 +1,25 @@
-import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
-import { useLiveDrivers } from '@/src/hooks/useLiveDrivers';
-import { useAuth } from '@/src/hooks/useAuth';
+import React, { useRef } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from './styles';
+import { useLiveTracking, initials } from './logic';
 
 export function LiveTracking() {
-  const { user } = useAuth(); // logged-in driver
-  const { drivers, locationGranted } = useLiveDrivers(user?.id);
-
-  if (!locationGranted) {
-    return (
-      <View style={styles.center}>
-        <Text>Please allow location permissions to start tracking</Text>
-      </View>
-    );
-  }
-
-  // Filter only drivers with valid coordinates
-  const visibleDrivers = drivers.filter(
-    d => d.lat != null && d.lng!= null
-  );
+  const mapRef = useRef<MapView | null>(null);
+  const {
+    myId,
+    visibleDrivers,
+    markerRefs,
+    webHoverPropsForDriver,
+    zoomIn,
+    zoomOut,
+  } = useLiveTracking(mapRef);
 
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={{
           latitude: 41.9981,
@@ -34,35 +28,51 @@ export function LiveTracking() {
           longitudeDelta: 0.08,
         }}
       >
-        {!locationGranted ? (
-          <View style={styles.center}>
-            <Text>Please allow location sharing to be visible on the map</Text>
-          </View>
-        ) : (
-          drivers.map((driver) => (
-            <Marker
-              key={driver.id}
-              coordinate={{
-                latitude: Number(driver.lat),
-                longitude: Number(driver.lng),
-              }}
-            >
-              <View style={styles.markerStyle}>
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>
-                  {driver.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                </Text>
-              </View>
-            </Marker>
-          ))
+        {visibleDrivers.length === 0 && (
+          <Marker coordinate={{ latitude: 41.9981, longitude: 21.4254 }} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+            <View style={styles.noLocationMarker}>
+              <Text style={styles.noLocationText}>
+                No shared locations yet. Ask users to allow location on login.
+              </Text>
+            </View>
+          </Marker>
         )}
 
+        {visibleDrivers.map((driver) => (
+          <Marker
+            key={driver.id}
+            ref={(ref) => { markerRefs.current[driver.id] = ref; }}
+            coordinate={{ latitude: Number(driver.lat), longitude: Number(driver.lng) }}
+            title={driver.name ?? 'Unknown'}
+            description={driver.role ?? undefined}
+            accessibilityLabel={`${driver.name ?? 'Unknown'} location marker`}
+            {...webHoverPropsForDriver(driver.id)}
+          >
+            <View style={driver.id === myId ? styles.myMarker : styles.markerStyle}>
+              <Text style={driver.id === myId ? styles.myMarkerText : styles.driverMarkerText}>
+                {initials(driver.name)}
+              </Text>
+            </View>
+            <Callout>
+              <View style={styles.calloutContainer}>
+                <Text style={styles.calloutTitle}>{driver.name ?? 'Unknown'}</Text>
+                {!!driver.role && <Text>{driver.role}</Text>}
+                {!!driver.last_location_at && <Text>Updated: {driver.last_location_at}</Text>}
+              </View>
+            </Callout>
+          </Marker>
+        ))}
       </MapView>
+
+      {/* Zoom controls overlay */}
+      <View style={styles.zoomControls}>
+        <TouchableOpacity style={styles.zoomButton} onPress={zoomIn} accessibilityRole="button" accessibilityLabel="Zoom in" accessibilityHint="Zooms the map in" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <MaterialCommunityIcons name="plus" size={22} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.zoomButton} onPress={zoomOut} accessibilityRole="button" accessibilityLabel="Zoom out" accessibilityHint="Zooms the map out" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <MaterialCommunityIcons name="minus" size={22} color="#fff" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1 },
-//   map: { flex: 1 },
-//   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-// });

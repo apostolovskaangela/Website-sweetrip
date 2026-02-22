@@ -1,20 +1,24 @@
-import React, { useState } from "react";
-import { Text, TextInput, TouchableOpacity, ScrollView } from "react-native";
+import React, { useMemo, useState } from "react";
+import { View } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { styles } from "./styles";
-import { useTripCreateLogic, CreateTripForm } from "./logic";
+import { useTripCreateLogic } from "./logic";
+import { Screen } from "@/src/components/ui/Screen";
+import { FadeIn } from "@/src/components/ui/FadeIn";
+import { PrimaryButton } from "@/src/components/ui/PrimaryButton";
+import { Text, TextInput, useTheme } from "react-native-paper";
+import { makeStyles } from "./styles";
 
 type TripCreateScreenProps = {
   navigation: any;
-  route: { params?: { onTripCreated?: (trip: CreateTripForm) => void } };
 };
 
 export default function TripCreateScreen({
   navigation,
-  route,
 }: TripCreateScreenProps) {
   const { form, setField, submit, drivers, vehicles } = useTripCreateLogic();
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -22,65 +26,74 @@ export default function TripCreateScreen({
   const handleSubmit = async () => {
     const newTrip = await submit();
     if (newTrip) {
-      // Notify parent screen to refresh trip list immediately
-      route.params?.onTripCreated?.(newTrip);
       navigation.goBack();
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
-      <Text style={styles.title}>Create Trip</Text>
+    <Screen scroll accessibilityLabel="Create trip">
+      <FadeIn fromY={10}>
+        <Text variant="headlineMedium" style={styles.headerTitle}>
+          Create Trip
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          Fill in the details below to dispatch a trip.
+        </Text>
+      </FadeIn>
 
-      {/* Trip Number */}
-      <TextInput
-        style={styles.input}
-        placeholder="Trip Number"
-        value={form.trip_number}
-        onChangeText={(v) => setField("trip_number", v)}
-      />
-
-      {/* From / To */}
-      <TextInput
-        style={styles.input}
-        placeholder="From"
-        value={form.destination_from}
-        onChangeText={(v) => setField("destination_from", v)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="To"
-        value={form.destination_to}
-        onChangeText={(v) => setField("destination_to", v)}
-      />
-
-      {/* A Code */}
-      <TextInput
-        style={styles.input}
-        placeholder="A Code"
-        value={form.a_code}
-        onChangeText={(v) => setField("a_code", v)}
-      />
-
-      {/* Mileage */}
-      <TextInput
-        style={styles.input}
-        placeholder="Mileage"
-        keyboardType="numeric"
-        value={form.mileage?.toString() ?? ""}
-        onChangeText={(v) => setField("mileage", Number(v))}
-      />
-
-      {/* Trip Date */}
-      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-        <Text style={styles.label}>Trip Date</Text>
+      <FadeIn fromY={12} durationMs={260} style={styles.formFade}>
         <TextInput
+          label="Trip number"
+          value={form.trip_number}
+          onChangeText={(v) => setField("trip_number", v)}
+          mode="outlined"
           style={styles.input}
-          placeholder="Trip Date"
-          editable={false}
-          value={form.trip_date}
         />
-      </TouchableOpacity>
+
+        <TextInput
+          label="From"
+          value={form.destination_from}
+          onChangeText={(v) => setField("destination_from", v)}
+          mode="outlined"
+          style={styles.input}
+        />
+        <TextInput
+          label="To"
+          value={form.destination_to}
+          onChangeText={(v) => setField("destination_to", v)}
+          mode="outlined"
+          style={styles.input}
+        />
+
+        <TextInput
+          label="A Code"
+          value={form.a_code}
+          onChangeText={(v) => setField("a_code", v)}
+          mode="outlined"
+          style={styles.input}
+        />
+
+        <TextInput
+          label="Mileage (km)"
+          keyboardType="numeric"
+          value={form.mileage?.toString() ?? ""}
+          onChangeText={(v) => setField("mileage", Number(v))}
+          mode="outlined"
+          style={styles.input}
+        />
+
+        <View style={styles.dateSection}>
+          <Text style={styles.dateLabel}>
+            Trip date
+          </Text>
+          <PrimaryButton
+            onPress={() => setShowDatePicker(true)}
+            accessibilityLabel="Choose trip date"
+            style={styles.dateButton}
+          >
+            {form.trip_date ? form.trip_date : "Select date"}
+          </PrimaryButton>
+        </View>
 
       {showDatePicker && (
         <DateTimePicker
@@ -95,67 +108,65 @@ export default function TripCreateScreen({
         />
       )}
 
-      {/* Vehicle Picker */}
-      <Text style={styles.label}>Vehicle</Text>
-      <Picker
-        selectedValue={form.vehicle_id}
-        onValueChange={(v) => setField("vehicle_id", Number(v))}
-      >
-        <Picker.Item label="Select vehicle" value={0} />
-        {vehicles.map((v) => (
-          <Picker.Item key={v.id} label={v.registration_number} value={v.id} />
-        ))}
-      </Picker>
+        <View style={styles.pickerContainer}>
+          <Text style={styles.pickerLabel}>Vehicle</Text>
+          <Picker selectedValue={form.vehicle_id} onValueChange={(v) => setField("vehicle_id", Number(v))}>
+            <Picker.Item label="Select vehicle" value={0} />
+            {vehicles.map((v) => (
+              <Picker.Item key={v.id} label={v.registration_number} value={v.id} />
+            ))}
+          </Picker>
+        </View>
 
-      {/* Driver Picker */}
-      <Text style={styles.label}>Driver</Text>
-      <Picker
-        selectedValue={form.driver_id}
-        onValueChange={(v) => setField("driver_id", Number(v))}
-      >
-        <Picker.Item label="Select driver" value={0} />
-        {drivers.map((d) => (
-          <Picker.Item key={d.id} label={d.name} value={d.id} />
-        ))}
-      </Picker>
+        <View style={styles.pickerContainer}>
+          <Text style={styles.pickerLabel}>Driver</Text>
+          <Picker selectedValue={form.driver_id} onValueChange={(v) => setField("driver_id", Number(v))}>
+            <Picker.Item label="Select driver" value={0} />
+            {drivers.map((d) => (
+              <Picker.Item key={d.id} label={d.name} value={d.id} />
+            ))}
+          </Picker>
+        </View>
 
-      {/* Notes */}
-      <TextInput
-        style={[styles.input, { height: 80 }]}
-        placeholder="Driver instructions / notes"
-        multiline
-        value={form.driver_description}
-        onChangeText={(v) => setField("driver_description", v)}
-      />
+        <TextInput
+          label="Driver instructions / notes"
+          multiline
+          value={form.driver_description}
+          onChangeText={(v) => setField("driver_description", v)}
+          mode="outlined"
+          style={styles.input}
+        />
 
-      <TextInput
-        style={[styles.input, { height: 80 }]}
-        placeholder="Internal admin / manager notes"
-        multiline
-        value={form.admin_description}
-        onChangeText={(v) => setField("admin_description", v)}
-      />
+        <TextInput
+          label="Internal admin / manager notes"
+          multiline
+          value={form.admin_description}
+          onChangeText={(v) => setField("admin_description", v)}
+          mode="outlined"
+          style={styles.input}
+        />
 
-      {/* Invoice & Amount */}
-      <TextInput
-        style={styles.input}
-        placeholder="Invoice Number"
-        value={form.invoice_number}
-        onChangeText={(v) => setField("invoice_number", v)}
-      />
+        <TextInput
+          label="Invoice number"
+          value={form.invoice_number}
+          onChangeText={(v) => setField("invoice_number", v)}
+          mode="outlined"
+          style={styles.input}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Amount"
-        keyboardType="numeric"
-        value={form.amount?.toString() ?? ""}
-        onChangeText={(v) => setField("amount", Number(v))}
-      />
+        <TextInput
+          label="Amount"
+          keyboardType="numeric"
+          value={form.amount?.toString() ?? ""}
+          onChangeText={(v) => setField("amount", Number(v))}
+          mode="outlined"
+          style={styles.amountInput}
+        />
 
-      {/* Submit Button */}
-      <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-        <Text style={styles.submitText}>Create</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <PrimaryButton onPress={handleSubmit} accessibilityLabel="Create trip">
+          Create
+        </PrimaryButton>
+      </FadeIn>
+    </Screen>
   );
 }

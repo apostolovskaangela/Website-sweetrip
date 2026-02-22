@@ -1,23 +1,51 @@
 import { StyleSheet } from "react-native";
+import type { MD3Theme } from "react-native-paper";
+import { radius, space } from "@/src/theme/tokens";
 
-export const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: "#f5f7fa" },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: "#fff",
-  },
-  submitBtn: {
-    backgroundColor: "hsl(217,91%,35%)",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 12,
-  },
-  submitText: { color: "#fff", textAlign: "center", fontWeight: "600" },
-  label: { color: "gray", paddingBottom: 2 },
-  error: { color: "red", marginBottom: 6 },
-});
+export const makeStyles = (theme: MD3Theme) =>
+  StyleSheet.create({
+    headerTitle: {
+      fontWeight: "800",
+      color: theme.colors.onBackground,
+    },
+    headerSubtitle: {
+      marginTop: 4,
+      color: theme.colors.onSurfaceVariant,
+    },
+    formFade: {
+      marginTop: space.lg,
+    },
+    input: {
+      marginBottom: space.md,
+      backgroundColor: theme.colors.elevation.level1,
+    },
+    amountInput: {
+      marginBottom: space.lg,
+      backgroundColor: theme.colors.elevation.level1,
+    },
+    dateSection: {
+      marginBottom: space.md,
+    },
+    dateLabel: {
+      marginBottom: 6,
+      fontWeight: "700",
+      color: theme.colors.onSurface,
+    },
+    dateButton: {
+      borderRadius: radius.md,
+    },
+    pickerContainer: {
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      borderRadius: radius.md,
+      overflow: "hidden",
+      backgroundColor: theme.colors.elevation.level1,
+      marginBottom: space.md,
+    },
+    pickerLabel: {
+      paddingHorizontal: 12,
+      paddingTop: 10,
+      fontWeight: "700",
+      color: theme.colors.onSurface,
+    },
+  });

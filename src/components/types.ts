@@ -3,7 +3,7 @@ export interface Trip {
     destination_from: string;
     destination_to: string;
     driver?: { name: string };
-    status: "completed" | "not_started" | "in_process" | "started";
+    status: string;
     status_label?: string;
 }
 

@@ -1,24 +1,29 @@
+import type { NavigatorScreenParams } from "@react-navigation/native";
 import { VehiclesStackParamList } from "./VehiclesNavigator";
-
-export type RootStackParamList = {
-  Welcome: undefined;
-  Login: undefined;
-  Dashboard: undefined;
-};
-
-export type MainDrawerParamList = {
-  Dashboard: undefined;
-  Trips: { screen?: keyof TripsStackParamList; params?: any } | undefined;
-  Vehicles: { screen?: keyof VehiclesStackParamList; params?: any } | undefined;
-  LiveTracking: undefined;
-  OfflineQueue: undefined;
-};
 
 export type TripsStackParamList = {
   TripsList: undefined;
   TripDetails: { id: number };
   TripCreate: undefined;
   TripEdit: { id: number };
+};
+
+export type MainDrawerParamList = {
+  Dashboard: undefined;
+  Trips: { screen?: keyof TripsStackParamList; params?: any } | undefined;
+  Vehicles: { screen?: keyof VehiclesStackParamList; params?: any } | undefined;
+  // LiveTracking: undefined;
+  OfflineQueue: undefined;
+};
+
+export type RootStackParamList = {
+  Welcome: undefined;
+  Login: undefined;
+  /**
+   * The authenticated area (Drawer navigator).
+   * Use nested params when navigating into Drawer screens.
+   */
+  Dashboard: NavigatorScreenParams<MainDrawerParamList> | undefined;
 };
 
 export interface Vehicle {

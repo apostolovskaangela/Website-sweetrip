@@ -28,9 +28,13 @@ export function useTripMutations() {
       const previous = queryClient.getQueryData<Trip>(
         queryKeys.trips.detail(id)
       );
-      queryClient.setQueryData<Trip>(queryKeys.trips.detail(id), (old) =>
-        old ? { ...old, ...data } : (undefined as unknown as Trip)
-      );
+      queryClient.setQueryData<Trip>(queryKeys.trips.detail(id), (old) => {
+        if (!old) return old as any;
+        // Avoid optimistic-overwriting nested arrays with a different shape (e.g. stops without ids).
+        // The server/local-api response will reconcile the full structure.
+        const { stops: _stops, ...rest } = data as any;
+        return { ...old, ...rest } as Trip;
+      });
       return { previous };
     },
     onError: (_err, { id }, context) => {

@@ -9,6 +9,7 @@ import {
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { styles } from "./styles";
+import { useTheme } from "react-native-paper";
 
 export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
   props
@@ -16,6 +17,7 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
   const currentRoute = props.state.routes[props.state.index].name;
   const { logout } = useAuth();
   const menuItems = useMenuItems();
+  const theme = useTheme();
 
   const handleNavigation = (item: MenuItem) => {
     if (item.name === "Vehicles") {
@@ -39,10 +41,20 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
   };
 
   return (
-    <DrawerContentScrollView {...props} style={styles.drawerContent}>
-      <View style={styles.drawerHeader}>
-        <Text style={styles.drawerTitle}>Sweetrip</Text>
-        <Text style={styles.drawerSubtitle}>Fleet Management</Text>
+    <DrawerContentScrollView
+      {...props}
+      style={[styles.drawerContent, { backgroundColor: theme.colors.background }]}
+    >
+      <View
+        style={[
+          styles.drawerHeader,
+          { borderBottomColor: theme.colors.outline },
+        ]}
+      >
+        <Text style={[styles.drawerTitle, { color: theme.colors.onSurface }]}>Sweetrip</Text>
+        <Text style={[styles.drawerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+          Fleet Management
+        </Text>
         <OfflineIndicator onPress={() => props.navigation.navigate('OfflineQueue')} />
       </View>
 
@@ -54,13 +66,21 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
               key={item.name}
               style={[styles.menuItem, isActive && styles.menuItemActive]}
               onPress={() => handleNavigation(item)}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              accessibilityHint={`Navigates to ${item.label}`}
+              accessibilityState={{ selected: isActive }}
             >
               <MaterialCommunityIcons
                 name={item.icon}
-                style={styles.menuIcon}
+                style={[styles.menuIcon, { color: isActive ? theme.colors.primary : theme.colors.onSurfaceVariant }]}
               />
               <Text
-                style={[styles.menuLabel, isActive && styles.menuLabelActive]}
+                style={[
+                  styles.menuLabel,
+                  { color: isActive ? theme.colors.onSurface : theme.colors.onSurfaceVariant },
+                  isActive && styles.menuLabelActive,
+                ]}
               >
                 {item.label}
               </Text>
@@ -73,12 +93,15 @@ export const CustomDrawerContent: React.FC<DrawerContentComponentProps> = (
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Logout"
+          accessibilityHint="Logs you out of the application"
         >
           <MaterialCommunityIcons
             name="logout"
-            style={styles.menuIcon}
+            style={[styles.menuIcon, { color: theme.colors.error }]}
           />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={[styles.logoutText, { color: theme.colors.error }]}>Logout</Text>
         </TouchableOpacity>
       </View>
     </DrawerContentScrollView>

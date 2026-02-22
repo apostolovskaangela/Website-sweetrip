@@ -1,8 +1,10 @@
-// /src/context/Auth/logic.tsx
 import { queryClient } from "@/src/lib/queryClient";
 import { useCallback, useEffect, useState } from "react";
 import { AuthRepository } from "./repository";
 import { AuthState, User } from "./types";
+import {
+    stopUserForegroundTracking,
+} from "@/src/services/location/foregroundTracking";
 
 export const useAuthLogic = () => {
     const [state, setState] = useState<AuthState>({
@@ -31,7 +33,7 @@ export const useAuthLogic = () => {
                 } else {
                     setState(prev => ({ ...prev, isLoading: false }));
                 }
-            } catch (err) {
+            } catch {
                 setState(prev => ({ ...prev, isLoading: false }));
             }
         })();
@@ -43,6 +45,7 @@ export const useAuthLogic = () => {
             const { token, user } = await AuthRepository.login(email, password);
             await AuthRepository.saveToken(token);
             await AuthRepository.saveUser(user);
+
             setState({ isAuthenticated: true, token, user, isLoading: false, error: null });
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Login failed";
@@ -51,9 +54,9 @@ export const useAuthLogic = () => {
         }
     }, []);
 
-    const register = useCallback(async (email: string, password: string, name?: string) => {
-        await login(email, password);
-    }, [login]);
+    // const register = useCallback(async (email: string, password: string, name?: string) => {
+    //     await login(email, password);
+    // }, [login]);
 
     const logout = useCallback(async () => {
         try {
@@ -61,6 +64,7 @@ export const useAuthLogic = () => {
         } catch (error) {
             console.error("Logout error:", error);
         } finally {
+            stopUserForegroundTracking();
             await AuthRepository.clear();
             queryClient.clear();
             setState({ isAuthenticated: false, token: null, user: null, isLoading: false, error: null });
@@ -90,5 +94,5 @@ export const useAuthLogic = () => {
         });
     }, []);
 
-    return { state, login, register, logout, clearError, refreshUser, updateUser };
+    return { state, login, logout, clearError, refreshUser, updateUser };
 };

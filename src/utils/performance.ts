@@ -49,3 +49,9 @@ export function useRenderCount(componentName: string): void {
     console.log(`[Perf] ${componentName} render #${countRef.current}`);
   }
 }
+
+// Track slow renders → useRenderCount, mark + measure.
+
+// Track slow async tasks → measureAsync.
+
+// Warn when operations exceed thresholds → helps keep UI snappy

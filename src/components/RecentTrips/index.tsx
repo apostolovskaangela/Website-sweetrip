@@ -1,49 +1,49 @@
-import { listVirtualizationConfig } from "@/src/lib/listConfig";
 import { useNavigation } from "@react-navigation/native";
-import React, { useCallback } from "react";
-import { FlatList, Text, TouchableOpacity, View } from "react-native";
-import type { Trip } from "../types";
+import React, { useCallback, useMemo } from "react";
+import { TouchableOpacity, View } from "react-native";
 import { getStatusBadgeStyle, getStatusLabel } from "./logic";
-import { styles } from "./styles";
+import { makeStyles, statusBadgeBg, statusTextColor } from "./styles";
+import { Text, useTheme } from "react-native-paper";
+
+type TripLike = {
+  id: number;
+  destination_from: string;
+  destination_to: string;
+  status: string;
+  status_label?: string;
+  driver?: { name?: string } | null;
+};
 
 interface RecentTripsProps {
-  trips: Trip[];
+  trips: TripLike[];
 }
 
 export const RecentTrips: React.FC<RecentTripsProps> = ({ trips = [] }) => {
   const navigation = useNavigation<any>();
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
 
-  const keyExtractor = useCallback((item: Trip) => item.id.toString(), []);
-  const renderItem = useCallback(
-    ({ item }: { item: Trip }) => (
-      <RecentTripCard
-        item={item}
-        onPress={() =>
-          navigation.navigate("Trips", {
-            screen: "TripDetails",
-            params: { id: item.id },
-          })
-        }
-      />
-    ),
+  const onPressTrip = useCallback(
+    (id: number) =>
+      navigation.navigate("Trips", {
+        screen: "TripDetails",
+        params: { id },
+      }),
     [navigation]
   );
 
   return (
-    <View style={{ marginVertical: 8 }}>
+    <View style={styles.section}>
       <Text style={styles.sectionTitle}>Recent Trips</Text>
-      <FlatList
-        data={trips}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        {...listVirtualizationConfig}
-      />
+      {trips.map((t) => (
+        <RecentTripCard key={t.id} item={t} onPress={() => onPressTrip(t.id)} />
+      ))}
     </View>
   );
 };
 
 interface RecentTripCardProps {
-  item: Trip;
+  item: TripLike;
   onPress: () => void;
 }
 
@@ -51,6 +51,8 @@ const RecentTripCard = React.memo<RecentTripCardProps>(function RecentTripCard({
   item,
   onPress,
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const badgeStyle = getStatusBadgeStyle(item.status);
   return (
     <TouchableOpacity onPress={onPress}>
@@ -66,10 +68,10 @@ const RecentTripCard = React.memo<RecentTripCardProps>(function RecentTripCard({
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: badgeStyle.backgroundColor },
+            statusBadgeBg(badgeStyle.backgroundColor),
           ]}
         >
-          <Text style={[styles.statusText, { color: badgeStyle.textColor }]}>
+          <Text style={[styles.statusText, statusTextColor(badgeStyle.textColor)]}>
             {getStatusLabel(item.status, item.status_label)}
           </Text>
         </View>

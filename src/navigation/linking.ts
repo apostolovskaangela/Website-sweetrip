@@ -2,20 +2,32 @@ import { LinkingOptions } from "@react-navigation/native";
 import { RootStackParamList } from "./types";
 
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ["myapp://", "https://myapp.com"],
+  prefixes: ["sweetrip://"],
   config: {
     screens: {
-      MainTabs: {
+      Welcome: "welcome",
+      Login: "login",
+      Dashboard: {
         screens: {
           Dashboard: "dashboard",
-          Trips: "trips",
-          Vehicles: "vehicles",
-          //   Profile: 'profile',
-        },
-      },
-      Auth: {
-        screens: {
-          SignIn: "signin",
+          Trips: {
+            screens: {
+              TripsList: "trips",
+              TripDetails: "trips/:id",
+              TripCreate: "trips/new",
+              TripEdit: "trips/:id/edit",
+            },
+          },
+          Vehicles: {
+            screens: {
+              VehiclesList: "vehicles",
+              VehicleDetails: "vehicles/:id",
+              VehicleCreate: "vehicles/new",
+              VehicleEdit: "vehicles/:id/edit",
+            },
+          },
+          // LiveTracking: "live-tracking",
+          OfflineQueue: "offline-queue",
         },
       },
     },
