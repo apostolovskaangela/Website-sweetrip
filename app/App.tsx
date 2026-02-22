@@ -11,10 +11,11 @@ import { MainNavigator } from "@/src/navigation/MainNavigator";
 import { RootStackParamList } from "@/src/navigation/types";
 import Welcome from "@/src/screens/Welcome";
 import Offline from '@/src/services/offline';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AppState } from 'react-native';
 import { useAppNavigatorLogic } from "./logic";
 import { styles } from "./styles";
+import * as dataService from '@/src/lib/sqlite/dataService';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -46,7 +47,29 @@ function AppNavigator() {
 }
 
 export default function App() {
+  const [dbInitialized, setDbInitialized] = useState(false);
+
   useEffect(() => {
+    // Initialize local database from db.json
+    const initDb = async () => {
+      try {
+        console.log('📦 Initializing local database...');
+        await dataService.initializeLocalDatabase();
+        console.log('✅ Local database initialized successfully');
+        setDbInitialized(true);
+      } catch (error) {
+        console.error('❌ Error initializing database:', error);
+        // Continue anyway - app should still work
+        setDbInitialized(true);
+      }
+    };
+
+    initDb();
+  }, []);
+
+  useEffect(() => {
+    if (!dbInitialized) return;
+
     // Start background sync for any queued offline requests
     Offline.startBackgroundSync();
 
@@ -61,7 +84,11 @@ export default function App() {
       sub.remove();
       Offline.stopBackgroundSync();
     };
-  }, []);
+  }, [dbInitialized]);
+
+  if (!dbInitialized) {
+    return <Loading />;
+  }
 
   const safeAreaEdges = platformSelect({
     ios: ['top', 'left', 'right'] as const,

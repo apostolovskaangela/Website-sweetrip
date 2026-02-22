@@ -1,0 +1,38 @@
+{
+  "name": "mda-react-native",
+  "version": "1.0.0",
+  "description": "MDA Trip Management App for React Native with SQLite",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "expo": "^50.0.0",
+    "expo-sqlite": "^13.0.0",
+    "expo-file-system": "^15.0.0",
+    "react": "^18.2.0",
+    "react-native": "^0.73.0",
+    "react-native-gesture-handler": "^2.14.0",
+    "@react-navigation/native": "^6.1.0",
+    "@react-navigation/native-stack": "^6.9.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.3.0",
+    "@testing-library/react-native": "^12.4.0",
+    "jest": "^29.7.0",
+    "eslint": "^8.55.0"
+  },
+  "sqlite": {
+    "schema": "./src/sqlite/schema.sql",
+    "seeds": "./src/sqlite/seed-data.sql",
+    "version": "3.45.0"
+  }
+}

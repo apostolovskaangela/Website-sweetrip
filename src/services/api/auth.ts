@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axiosClient from '../axiosClient';
+import * as dataService from '@/src/lib/sqlite/dataService';
 import Offline from '../offline';
 
 const STORAGE_KEYS = {
@@ -17,7 +17,8 @@ export interface LoginResponse {
     id: number;
     name: string;
     email: string;
-    roles: string[];
+    roles?: string[];
+    role_id?: number;
   };
   token: string;
 }
@@ -26,38 +27,59 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  roles: string[];
+  roles?: string[];
+  role_id?: number;
 }
+
+const ROLE_MAP: { [key: number]: string } = {
+  1: 'ceo',
+  2: 'manager',
+  3: 'admin',
+  4: 'driver',
+};
 
 export const authApi = {
   /**
-   * Login user
+   * Login user (local)
    */
   login: async (data: LoginRequest): Promise<LoginResponse> => {
     try {
-      const response = await axiosClient.post<LoginResponse>('/login', data);
+      const user = await dataService.getUserByEmail(data.email);
+      if (!user) {
+        throw new Error('Invalid email or password');
+      }
+
+      // In development, we accept any password for testing
+      // In production, you would verify the bcrypt password hash
+      if (!__DEV__ && data.password !== user.password) {
+        throw new Error('Invalid email or password');
+      }
+
+      const token = `local_token_${user.id}_${Date.now()}`;
+      const roleName = ROLE_MAP[user.role_id] || 'user';
+
+      const response: LoginResponse = {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          roles: [roleName],
+          role_id: user.role_id,
+        },
+        token,
+      };
 
       // Store token and user data
-      if (response.data.token) {
-        await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, response.data.token);
-        await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data.user));
+      await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
+      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user));
+
+      if (__DEV__) {
+        console.log('✅ Local login successful for', data.email);
       }
 
-      return response.data;
+      return response;
     } catch (err: any) {
-      // Network/offline fallback: allow login if we have stored credentials for this email
-      if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
-        const storedJson = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-        const storedToken = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
-        if (storedJson && storedToken) {
-          const storedUser = JSON.parse(storedJson);
-          if (storedUser.email === data.email) {
-            // return stored user and token (offline login)
-            if (__DEV__) console.log('⚡ Offline login used for', data.email);
-            return { user: storedUser, token: storedToken } as LoginResponse;
-          }
-        }
-      }
+      if (__DEV__) console.error('Login error:', err);
       throw err;
     }
   },
@@ -67,11 +89,7 @@ export const authApi = {
    */
   logout: async (): Promise<void> => {
     try {
-      await axiosClient.post('/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Always clear local storage and queued offline requests
+      // Clear local storage and queued offline requests
       await AsyncStorage.removeItem(STORAGE_KEYS.TOKEN);
       await AsyncStorage.removeItem(STORAGE_KEYS.USER);
       try {
@@ -79,6 +97,8 @@ export const authApi = {
       } catch (e) {
         if (__DEV__) console.warn('Failed to clear offline queue on logout', e);
       }
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   },
 
@@ -87,18 +107,14 @@ export const authApi = {
    */
   getUser: async (): Promise<User> => {
     try {
-      const response = await axiosClient.get<User>('/user');
-      // update stored copy
-      try {
-        await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data));
-      } catch (e) {
-        if (__DEV__) console.warn('Failed to update stored user', e);
-      }
-      return response.data;
-    } catch (err: any) {
-      if (__DEV__) console.warn('getUser failed, returning stored user if present', err?.message || err);
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const user = JSON.parse(stored);
+        return user;
+      }
+      throw new Error('No user data found');
+    } catch (err: any) {
+      if (__DEV__) console.warn('getUser failed:', err?.message || err);
       throw err;
     }
   },

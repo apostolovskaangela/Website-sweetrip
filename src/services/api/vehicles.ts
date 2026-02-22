@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axiosClient from "../axiosClient";
-import { enqueueRequest } from '../offline';
+import * as dataService from '@/src/lib/sqlite/dataService';
 
 export interface Vehicle {
   id: number;
@@ -13,68 +12,67 @@ export interface Vehicle {
 // src/services/api.ts
 export const vehiclesApi = {
   list: async (): Promise<any[]> => {
-    const cacheKey = '/vehicles';
     try {
-      const response = await axiosClient.get("/vehicles");
-      const list = response.data.vehicles;
-      try {
-        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(list));
-      } catch (e) {
-        if (__DEV__) console.warn('Failed to cache vehicles list', e);
-      }
-      return list;
+      const vehicles = await dataService.getAllVehicles();
+      return vehicles;
     } catch (err: any) {
-      if (__DEV__) console.warn('Vehicles list failed, returning cached if present', err?.message || err);
-      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
-      if (cached) return JSON.parse(cached);
+      if (__DEV__) console.error('Error fetching vehicles:', err);
       throw err;
     }
   },
 
   get: async (id: number) => {
-    const cacheKey = `/vehicles/${id}`;
     try {
-      const response = await axiosClient.get(`/vehicles/${id}`);
-      try {
-        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(response.data.vehicle));
-      } catch (e) {
-        if (__DEV__) console.warn('Failed to cache vehicle', e);
+      const vehicle = await dataService.getVehicleById(id);
+      if (!vehicle) {
+        throw new Error(`Vehicle with id ${id} not found`);
       }
-      return response.data.vehicle;
+      return vehicle;
     } catch (err: any) {
-      if (__DEV__) console.warn('Vehicle fetch failed, returning cache if present', err?.message || err);
-      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
-      if (cached) return JSON.parse(cached);
+      if (__DEV__) console.error('Error fetching vehicle:', err);
       throw err;
     }
   },
 
   create: async (data: any) => {
     try {
-      const response = await axiosClient.post("/vehicles", data);
-      return response.data.vehicle;
+      const vehicle = await dataService.createVehicle({
+        registration_number: data.registration_number,
+        notes: data.notes,
+        is_active: data.is_active === 1 ? 1 : 0,
+        manager_id: data.manager_id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      return vehicle;
     } catch (err: any) {
-      await enqueueRequest({ method: 'POST', url: '/vehicles', body: data });
-      const temp: any = { id: -Date.now(), ...data };
-      return temp;
+      if (__DEV__) console.error('Error creating vehicle:', err);
+      throw err;
     }
   },
 
   update: async (id: number, data: any) => {
     try {
-      const response = await axiosClient.put(`/vehicles/${id}`, data);
-      return response.data.vehicle;
+      const vehicle = await dataService.updateVehicle(id, data);
+      if (!vehicle) {
+        throw new Error(`Vehicle with id ${id} not found`);
+      }
+      return vehicle;
     } catch (err: any) {
-      await enqueueRequest({ method: 'PUT', url: `/vehicles/${id}`, body: data });
-      return { id, ...data };
+      if (__DEV__) console.error('Error updating vehicle:', err);
+      throw err;
     }
   },
 
   delete: async (id: number) => {
     try {
-      await axiosClient.delete(`/vehicles/${id}`);
+      const success = await dataService.deleteVehicle(id);
+      if (!success) {
+        throw new Error(`Vehicle with id ${id} not found`);
+      }
     } catch (err: any) {
-      await enqueueRequest({ method: 'DELETE', url: `/vehicles/${id}` });
+      if (__DEV__) console.error('Error deleting vehicle:', err);
+      throw err;
     }
   },
 };

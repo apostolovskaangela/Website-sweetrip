@@ -1,16 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axiosClient from '../axiosClient';
-import { enqueueRequest } from '../offline';
+import * as dataService from '@/src/lib/sqlite/dataService';
 
 export interface Trip {
   id: number;
   trip_number: string;
   status: string;
-  status_label: string;
+  status_label?: string;
   trip_date: string;
   destination_from: string;
   destination_to: string;
-  mileage: number;
+  mileage?: number;
   a_code?: string;
   driver_description?: string;
   admin_description?: string;
@@ -93,7 +92,7 @@ export interface TripCreateDataResponse {
 }
 
 export interface UpdateStatusRequest {
-  status: 'not_started' | 'in_process' | 'started' | 'completed';
+  status: 'not_started' | 'in_process' | 'started' | 'in_progress' | 'completed';
 }
 
 export interface UpdateStatusResponse {
@@ -107,121 +106,167 @@ export interface UpdateStatusResponse {
 
 export const tripsApi = {
   list: async (page?: number): Promise<TripsListResponse> => {
-    const params = page ? { page } : {};
-    const cacheKey = `/trips${page ? `?page=${page}` : ''}`;
     try {
-      const response = await axiosClient.get<TripsListResponse>('/trips', { params });
-      try {
-        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(response.data));
-      } catch (e) {
-        if (__DEV__) console.warn('Failed to cache trips list', e);
-      }
-      return response.data;
-    } catch (err: any) {
-      if (__DEV__) console.warn('Trips list request failed, returning cached data if available', err?.message || err);
-      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
-      if (cached) return JSON.parse(cached);
-      throw err;
+      const trips = await dataService.getAllTrips();
+      const total = trips.length;
+      const per_page = 15;
+      const last_page = Math.ceil(total / per_page);
+      const current_page = page || 1;
+      const start = (current_page - 1) * per_page;
+      const paginatedTrips = trips.slice(start, start + per_page);
+
+      return {
+        trips: paginatedTrips as Trip[],
+        pagination: {
+          current_page,
+          last_page,
+          per_page,
+          total,
+        },
+      };
+    } catch (error: any) {
+      if (__DEV__) console.error('Error fetching trips:', error);
+      throw error;
     }
   },
 
   get: async (id: number): Promise<Trip> => {
-    const cacheKey = `/trips/${id}`;
     try {
-      const response = await axiosClient.get<TripResponse>(`/trips/${id}`);
-      try {
-        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(response.data.trip));
-      } catch (e) {
-        if (__DEV__) console.warn('Failed to cache trip', e);
+      const tripData = await dataService.getTripWithRelations(id);
+      if (!tripData) {
+        throw new Error(`Trip with id ${id} not found`);
       }
-      return response.data.trip;
-    } catch (err: any) {
-      if (__DEV__) console.warn('Trip fetch failed, returning cached if present', err?.message || err);
-      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
-      if (cached) return JSON.parse(cached);
-      throw err;
+      return tripData as unknown as Trip;
+    } catch (error: any) {
+      if (__DEV__) console.error('Error fetching trip:', error);
+      throw error;
     }
   },
 
   create: async (data: CreateTripRequest): Promise<CreateTripResponse> => {
     try {
-      const response = await axiosClient.post<CreateTripResponse>('/trips', data);
-      return response.data;
-    } catch (err: any) {
-      // enqueue request to be synced later
-      await enqueueRequest({ method: 'POST', url: '/trips', body: data });
-      const tempTrip: any = { id: -Date.now(), ...data };
-      return { message: 'created_offline', trip: tempTrip } as unknown as CreateTripResponse;
+      const newTrip = await dataService.createTrip({
+        trip_number: data.trip_number,
+        vehicle_id: data.vehicle_id,
+        driver_id: data.driver_id,
+        a_code: data.a_code,
+        destination_from: data.destination_from,
+        destination_to: data.destination_to,
+        status: data.status || 'not_started',
+        mileage: data.mileage,
+        driver_description: data.driver_description,
+        admin_description: data.admin_description,
+        trip_date: data.trip_date,
+        invoice_number: data.invoice_number,
+        amount: data.amount,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as any);
+
+      // Create associated stops
+      if (data.stops && data.stops.length > 0) {
+        for (const stop of data.stops) {
+          await dataService.createTripStop({
+            trip_id: newTrip.id,
+            destination: stop.destination,
+            stop_order: stop.stop_order,
+            notes: stop.notes,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      return {
+        message: 'Trip created successfully',
+        trip: newTrip as Trip,
+      };
+    } catch (error: any) {
+      if (__DEV__) console.error('Error creating trip:', error);
+      throw error;
     }
   },
 
   update: async (id: number, data: UpdateTripRequest): Promise<CreateTripResponse> => {
     try {
-      const response = await axiosClient.put<CreateTripResponse>(`/trips/${id}`, data);
-      return response.data;
-    } catch (err: any) {
-      await enqueueRequest({ method: 'PUT', url: `/trips/${id}`, body: data });
-      const tempTrip: any = { id, ...data };
-      return { message: 'updated_offline', trip: tempTrip } as unknown as CreateTripResponse;
+      const updated = await dataService.updateTrip(id, data as any);
+      if (!updated) {
+        throw new Error(`Trip with id ${id} not found`);
+      }
+      return {
+        message: 'Trip updated successfully',
+        trip: updated as Trip,
+      };
+    } catch (error: any) {
+      if (__DEV__) console.error('Error updating trip:', error);
+      throw error;
     }
   },
 
   delete: async (id: number): Promise<void> => {
     try {
-      await axiosClient.delete(`/trips/${id}`);
-    } catch (err: any) {
-      await enqueueRequest({ method: 'DELETE', url: `/trips/${id}` });
+      const success = await dataService.deleteTrip(id);
+      if (!success) {
+        throw new Error(`Trip with id ${id} not found`);
+      }
+    } catch (error: any) {
+      if (__DEV__) console.error('Error deleting trip:', error);
+      throw error;
     }
   },
 
   getCreateData: async (): Promise<TripCreateDataResponse> => {
-    const cacheKey = `/trips/create`;
     try {
-      const response = await axiosClient.get<TripCreateDataResponse>('/trips/create');
-      try {
-        await AsyncStorage.setItem(`cache:${cacheKey}`, JSON.stringify(response.data));
-      } catch (e) {
-        if (__DEV__) console.warn('Failed to cache trip create data', e);
-      }
-      return response.data;
-    } catch (err: any) {
-      if (__DEV__) console.warn('Trip create data request failed, returning cached data if available', err?.message || err);
-      const cached = await AsyncStorage.getItem(`cache:${cacheKey}`);
-      if (cached) return JSON.parse(cached);
-      throw err;
+      const drivers = await dataService.getDrivers();
+      const vehicles = await dataService.getActiveVehicles();
+
+      return {
+        drivers: drivers.map(d => ({
+          id: d.id,
+          name: d.name,
+          email: d.email,
+        })),
+        vehicles: vehicles.map(v => ({
+          id: v.id,
+          registration_number: v.registration_number || '',
+          is_active: v.is_active === 1,
+        })),
+      };
+    } catch (error: any) {
+      if (__DEV__) console.error('Error fetching trip create data:', error);
+      throw error;
     }
   },
 
   updateStatus: async (id: number, status: UpdateStatusRequest): Promise<UpdateStatusResponse> => {
     try {
       if (__DEV__) {
-        console.log('🔄 Updating trip status:', {
+        console.log('🔄 Updating trip status (local):', {
           tripId: id,
           status: status.status,
-          endpoint: `/driver/trips/${id}/status`,
-          requestBody: status,
         });
       }
-      
-      const response = await axiosClient.post<UpdateStatusResponse>(
-        `/driver/trips/${id}/status`,
-        status
-      );
-      
-      if (__DEV__) {
-        console.log('✅ Status updated successfully:', response.data);
+
+      const updated = await dataService.updateTripStatus(id, status.status);
+      if (!updated) {
+        throw new Error(`Trip with id ${id} not found`);
       }
-      
-      return response.data;
+
+      if (__DEV__) {
+        console.log('✅ Status updated successfully:', updated);
+      }
+
+      return {
+        message: 'Trip status updated successfully',
+        trip: {
+          id: updated.id,
+          status: updated.status,
+          status_label: updated.status,
+        },
+      };
     } catch (error: any) {
       if (__DEV__) {
-        console.error('❌ Error updating trip status:', {
-          tripId: id,
-          status: status.status,
-          error: error.response?.data || error.message,
-          statusCode: error.response?.status,
-          validationErrors: error.response?.data?.errors,
-        });
+        console.error('❌ Error updating trip status:', error);
       }
       throw error;
     }
@@ -230,7 +275,7 @@ export const tripsApi = {
   uploadCMR: async (id: number, file: any): Promise<TripResponse> => {
     try {
       if (__DEV__) {
-        console.log('📤 Uploading CMR:', {
+        console.log('📤 Uploading CMR (local):', {
           tripId: id,
           file: {
             uri: file.uri,
@@ -240,99 +285,33 @@ export const tripsApi = {
         });
       }
 
-      // Use Fetch API instead of axios for better React Native FormData support
-      const formData = new FormData();
-      
-      // Format file for React Native FormData
-      // React Native FormData requires specific format with uri, type, and name
-      formData.append('cmr', {
-        uri: file.uri,
-        type: file.type || 'image/jpeg',
-        name: file.name || 'cmr.jpg',
+      // For local development, just store the file path/uri
+      const trip = await dataService.updateTrip(id, {
+        cmr: file.name || file.uri,
+        cmr_url: file.uri,
       } as any);
-      
-      if (__DEV__) {
-        console.log('📎 FormData file object:', {
-          uri: file.uri,
-          type: file.type || 'image/jpeg',
-          name: file.name || 'cmr.jpg',
-        });
+
+      if (!trip) {
+        throw new Error(`Trip with id ${id} not found`);
       }
-
-      // Get auth token
-      const token = await AsyncStorage.getItem('AUTH_TOKEN');
-      
-      // Get base URL from axios client config
-      const baseURL = axiosClient.defaults.baseURL;
-      const url = `${baseURL}/driver/trips/${id}/cmr`;
-      
-      if (__DEV__) {
-        console.log('📡 Upload URL:', url);
-      }
-
-      // Use fetch API for file uploads (better React Native support)
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          // Don't set Content-Type - let fetch set it with boundary
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const error: any = new Error(errorData.message || `Upload failed with status ${response.status}`);
-        error.response = {
-          status: response.status,
-          data: errorData,
-        };
-        throw error;
-      }
-
-      const data: TripResponse = await response.json();
 
       if (__DEV__) {
-        console.log('✅ CMR uploaded successfully:', {
-          trip: data.trip,
-          cmr: data.trip?.cmr,
-          cmr_url: data.trip?.cmr_url,
-        });
+        console.log('✅ CMR stored successfully:', trip);
       }
 
-      return data;
+      return {
+        trip: trip as Trip,
+      };
     } catch (error: any) {
       if (__DEV__) {
-        console.error('❌ Error uploading CMR:', {
-          tripId: id,
-          error: error.response?.data || error.message,
-          statusCode: error.response?.status,
-          validationErrors: error.response?.data?.errors,
-          requestData: {
-            uri: file.uri,
-            type: file.type,
-            name: file.name,
-          },
-        });
+        console.error('❌ Error uploading CMR:', error);
       }
       throw error;
     }
   },
 
   uploadCMRByTrip: async (id: number, file: any): Promise<TripResponse> => {
-    const formData = new FormData();
-    formData.append('cmr', file);
-    
-    const response = await axiosClient.post<TripResponse>(
-      `/trips/${id}/cmr`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    return response.data;
+    return tripsApi.uploadCMR(id, file);
   },
 };
 

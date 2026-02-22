@@ -1,0 +1,247 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "CEO",
+      "email": "ceo@example.com",
+      "manager_id": null,
+      "role_id": 1,
+      "email_verified_at": null,
+      "password": "$2y$12$9FbVcqPRPwkK5lv3c.lLO.tV6j0n7Z4q1c3QqQ5hQ7z4N8Z2B9Loe",
+      "remember_token": null,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Manager Jovan",
+      "email": "jovan@example.com",
+      "manager_id": null,
+      "role_id": 2,
+      "email_verified_at": null,
+      "password": "$2y$12$9FbVcqPRPwkK5lv3c.lLO.tV6j0n7Z4q1c3QqQ5hQ7z4N8Z2B9Loe",
+      "remember_token": null,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "Manager Kenan",
+      "email": "kenan@example.com",
+      "manager_id": null,
+      "role_id": 2,
+      "email_verified_at": null,
+      "password": "$2y$12$9FbVcqPRPwkK5lv3c.lLO.tV6j0n7Z4q1c3QqQ5hQ7z4N8Z2B9Loe",
+      "remember_token": null,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "Admin",
+      "email": "admin@example.com",
+      "manager_id": null,
+      "role_id": 3,
+      "email_verified_at": null,
+      "password": "$2y$12$9FbVcqPRPwkK5lv3c.lLO.tV6j0n7Z4q1c3QqQ5hQ7z4N8Z2B9Loe",
+      "remember_token": null,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 5,
+      "name": "Angelique",
+      "email": "angelique@example.com",
+      "manager_id": 2,
+      "role_id": 4,
+      "email_verified_at": null,
+      "password": "$2y$12$9FbVcqPRPwkK5lv3c.lLO.tV6j0n7Z4q1c3QqQ5hQ7z4N8Z2B9Loe",
+      "remember_token": null,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 6,
+      "name": "Nellie",
+      "email": "nellie@example.com",
+      "manager_id": 2,
+      "role_id": 4,
+      "email_verified_at": null,
+      "password": "$2y$12$9FbVcqPRPwkK5lv3c.lLO.tV6j0n7Z4q1c3QqQ5hQ7z4N8Z2B9Loe",
+      "remember_token": null,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 7,
+      "name": "Embla",
+      "email": "embla@example.com",
+      "manager_id": 3,
+      "role_id": 4,
+      "email_verified_at": null,
+      "password": "$2y$12$9FbVcqPRPwkK5lv3c.lLO.tV6j0n7Z4q1c3QqQ5hQ7z4N8Z2B9Loe",
+      "remember_token": null,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": 1,
+      "registration_number": "ABC-123",
+      "notes": "Main company vehicle",
+      "is_active": 1,
+      "manager_id": 2,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "registration_number": "XYZ-789",
+      "notes": "Secondary vehicle",
+      "is_active": 1,
+      "manager_id": 2,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "registration_number": "MNO-456",
+      "notes": "Third vehicle",
+      "is_active": 1,
+      "manager_id": 3,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    }
+  ],
+  "trips": [
+    {
+      "id": 1,
+      "trip_number": "TRIP-001",
+      "vehicle_id": 1,
+      "driver_id": 5,
+      "a_code": null,
+      "destination_from": "Sarajevo",
+      "destination_to": "Mostar",
+      "status": "not_started",
+      "mileage": null,
+      "cmr": null,
+      "driver_description": null,
+      "admin_description": null,
+      "trip_date": "2026-02-01",
+      "invoice_number": null,
+      "amount": null,
+      "created_by": 2,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "trip_number": "TRIP-002",
+      "vehicle_id": 2,
+      "driver_id": 6,
+      "a_code": null,
+      "destination_from": "Tuzla",
+      "destination_to": "Zenica",
+      "status": "in_progress",
+      "mileage": null,
+      "cmr": null,
+      "driver_description": null,
+      "admin_description": null,
+      "trip_date": "2026-02-01",
+      "invoice_number": null,
+      "amount": null,
+      "created_by": 2,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "trip_number": "TRIP-003",
+      "vehicle_id": 3,
+      "driver_id": 7,
+      "a_code": null,
+      "destination_from": "Banja Luka",
+      "destination_to": "Prijedor",
+      "status": "completed",
+      "mileage": null,
+      "cmr": null,
+      "driver_description": null,
+      "admin_description": null,
+      "trip_date": "2025-01-31",
+      "invoice_number": null,
+      "amount": null,
+      "created_by": 3,
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    }
+  ],
+  "trip_stops": [
+    {
+      "id": 1,
+      "trip_id": 1,
+      "destination": "Konjic",
+      "stop_order": 1,
+      "notes": "First stop",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "trip_id": 1,
+      "destination": "Jablanica",
+      "stop_order": 2,
+      "notes": "Second stop",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "trip_id": 2,
+      "destination": "Vitez",
+      "stop_order": 1,
+      "notes": "Single stop",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "trip_id": 3,
+      "destination": "Banja Luka",
+      "stop_order": 1,
+      "notes": "Final destination",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    }
+  ],
+  "roles": [
+    {
+      "id": 1,
+      "name": "ceo",
+      "guard_name": "web",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "manager",
+      "guard_name": "web",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "admin",
+      "guard_name": "web",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "driver",
+      "guard_name": "web",
+      "created_at": "2026-02-01T00:00:00Z",
+      "updated_at": "2026-02-01T00:00:00Z"
+    }
+  ]
+}
