@@ -1,11 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as dataService from '@/src/lib/sqlite/dataService';
-import axiosClient from '../axiosClient';
 import { enqueueRequest } from '../offline';
 import { checkInternetNow } from '@/src/services/internetStatus';
-// SDK 54+ deprecates the legacy namespace exports from `expo-file-system`.
-// Use the legacy API explicitly to avoid runtime errors in Expo Go / SDK 54.
-import * as FileSystem from 'expo-file-system/legacy';
 
 export interface Trip {
   id: number;
@@ -114,12 +109,15 @@ export const tripsApi = {
   list: async (page?: number): Promise<TripsListResponse> => {
     try {
       const trips = await dataService.getAllTrips();
-      const total = trips.length;
+      const normalized = (Array.isArray(trips) ? trips : [])
+        .map((t: any) => ({ ...t, id: Number(t?.id) }))
+        .filter((t: any) => Number.isFinite(t.id) && t.id !== 0);
+      const total = normalized.length;
       const per_page = 15;
       const last_page = Math.ceil(total / per_page);
       const current_page = page || 1;
       const start = (current_page - 1) * per_page;
-      const paginatedTrips = trips.slice(start, start + per_page);
+      const paginatedTrips = normalized.slice(start, start + per_page);
 
       return {
         trips: paginatedTrips as Trip[],
@@ -242,6 +240,7 @@ export const tripsApi = {
     try {
       const drivers = await dataService.getDrivers();
       const vehicles = await dataService.getActiveVehicles();
+      const isActive = (v: any) => v === true || v === 1 || v === '1';
 
       return {
         drivers: drivers.map(d => ({
@@ -252,7 +251,7 @@ export const tripsApi = {
         vehicles: vehicles.map(v => ({
           id: v.id,
           registration_number: v.registration_number || '',
-          is_active: v.is_active === 1,
+          is_active: isActive((v as any).is_active),
         })),
       };
     } catch (error: any) {

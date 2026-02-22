@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as dataService from '@/src/lib/sqlite/dataService';
 import Offline from '../offline';
+import { storage } from '@/src/services/storage';
 
 const STORAGE_KEYS = {
   TOKEN: 'AUTH_TOKEN',
@@ -70,8 +70,8 @@ export const authApi = {
       };
 
       // Store token and user data
-      await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
-      await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user));
+      await storage.setItem(STORAGE_KEYS.TOKEN, token);
+      await storage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user));
 
       if (__DEV__) {
         console.log('✅ Local login successful for', data.email);
@@ -90,8 +90,8 @@ export const authApi = {
   logout: async (): Promise<void> => {
     try {
       // Clear local storage and queued offline requests
-      await AsyncStorage.removeItem(STORAGE_KEYS.TOKEN);
-      await AsyncStorage.removeItem(STORAGE_KEYS.USER);
+      await storage.removeItem(STORAGE_KEYS.TOKEN);
+      await storage.removeItem(STORAGE_KEYS.USER);
       try {
         await Offline.clearQueue();
       } catch (e) {
@@ -107,7 +107,7 @@ export const authApi = {
    */
   getUser: async (): Promise<User> => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+      const stored = await storage.getItem(STORAGE_KEYS.USER);
       if (stored) {
         const user = JSON.parse(stored);
         return user;
@@ -130,7 +130,7 @@ export const authApi = {
    * Check if user is authenticated
    */
   isAuthenticated: async (): Promise<boolean> => {
-    const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+    const token = await storage.getItem(STORAGE_KEYS.TOKEN);
     return !!token;
   },
 
@@ -139,7 +139,7 @@ export const authApi = {
    */
   getStoredUser: async (): Promise<User | null> => {
     try {
-      const userJson = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+      const userJson = await storage.getItem(STORAGE_KEYS.USER);
       return userJson ? JSON.parse(userJson) : null;
     } catch (error) {
       console.error('Error getting stored user:', error);

@@ -1,4 +1,4 @@
-import { IRoleHandler } from "./IRoleHandler";
+import type { IRoleHandler } from "./IRoleHandler";
 import { AdminRoleHandler } from "./handlers/AdminRoleHandler";
 import { ManagerRoleHandler } from "./handlers/ManagerRoleHandler";
 import { DriverRoleHandler } from "./handlers/DriverRoleHandler";

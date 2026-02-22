@@ -1,5 +1,5 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authApi } from "@/src/services/api";
+import { storage } from "@/src/services/storage";
 import { User } from "./types";
 
 const STORAGE_KEYS = {
@@ -9,25 +9,25 @@ const STORAGE_KEYS = {
 
 export const AuthRepository = {
     async saveToken(token: string) {
-        await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
+        await storage.setItem(STORAGE_KEYS.TOKEN, token);
     },
 
     async getToken(): Promise<string | null> {
-        return AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+        return storage.getItem(STORAGE_KEYS.TOKEN);
     },
 
     async saveUser(user: User) {
-        await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        await storage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     },
 
     async getUser(): Promise<User | null> {
-        const userStr = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+        const userStr = await storage.getItem(STORAGE_KEYS.USER);
         return userStr ? JSON.parse(userStr) : null;
     },
 
     async clear(): Promise<void> {
-        await AsyncStorage.removeItem(STORAGE_KEYS.TOKEN);
-        await AsyncStorage.removeItem(STORAGE_KEYS.USER);
+        await storage.removeItem(STORAGE_KEYS.TOKEN);
+        await storage.removeItem(STORAGE_KEYS.USER);
     },
 
     async login(email: string, password: string): Promise<{ token: string; user: User }> {

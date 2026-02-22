@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as dataService from '@/src/lib/sqlite/dataService';
 
 export interface User {

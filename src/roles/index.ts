@@ -1,4 +1,4 @@
-export { IRoleHandler } from "./IRoleHandler";
+export type { IRoleHandler } from "./IRoleHandler";
 export { RoleFactory } from "./RoleFactory";
 export { BaseRoleHandler } from "./handlers/BaseRoleHandler";
 export { AdminRoleHandler } from "./handlers/AdminRoleHandler";

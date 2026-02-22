@@ -1,4 +1,4 @@
-import { IRoleHandler } from "../IRoleHandler";
+import type { IRoleHandler } from "../IRoleHandler";
 
 /**
  * Base role handler with default implementations

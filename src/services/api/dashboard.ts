@@ -70,6 +70,12 @@ export const dashboardApi = {
       const trips = await dataService.getAllTrips();
       const vehicles = await dataService.getAllVehicles();
       const drivers = await dataService.getDrivers();
+      const users = await dataService.getAllUsers();
+
+      const byUserId = new Map<number, any>(users.map((u) => [Number(u.id), u]));
+      const byVehicleId = new Map<number, any>(vehicles.map((v) => [Number(v.id), v]));
+
+      const isActive = (v: any) => v === true || v === 1 || v === '1';
 
       const today = new Date().toISOString().split('T')[0];
       const activeTripCount = trips.filter(t => t.status === 'in_progress' || t.status === 'not_started').length;
@@ -94,20 +100,30 @@ export const dashboardApi = {
           completed_trips_last_month: tripsLastMonth.filter(t => t.status === 'completed').length,
         },
         drivers: drivers.map(d => ({ id: d.id, name: d.name, email: d.email })),
-        recent_trips: trips.slice(0, 10).map(t => ({
-          id: t.id,
-          trip_number: t.trip_number,
-          trip_date: t.trip_date,
-          status: t.status,
-          status_label: t.status,
-          destination_from: t.destination_from,
-          destination_to: t.destination_to,
-          mileage: t.mileage,
-        } as Trip)),
+        recent_trips: trips
+          .slice(0, 10)
+          .map((t) => {
+            const driver = byUserId.get(Number((t as any).driver_id));
+            const vehicle = byVehicleId.get(Number((t as any).vehicle_id));
+            return {
+              id: Number((t as any).id),
+              trip_number: (t as any).trip_number,
+              trip_date: (t as any).trip_date,
+              status: (t as any).status,
+              status_label: (t as any).status,
+              destination_from: (t as any).destination_from,
+              destination_to: (t as any).destination_to,
+              mileage: (t as any).mileage,
+              driver: driver ? { id: Number(driver.id), name: String(driver.name) } : undefined,
+              vehicle: vehicle
+                ? { id: Number(vehicle.id), registration_number: String(vehicle.registration_number ?? '') }
+                : undefined,
+            } as Trip;
+          }),
         vehicles: vehicles.map(v => ({
           id: v.id,
           registration_number: v.registration_number || '',
-          is_active: v.is_active === 1,
+          is_active: isActive((v as any).is_active),
         })),
       };
     } catch (error: any) {

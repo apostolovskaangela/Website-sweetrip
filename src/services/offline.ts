@@ -1,5 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axiosClient from './axiosClient';
+import { storage } from '@/src/services/storage';
+import * as dataService from '@/src/lib/sqlite/dataService';
 
 const QUEUE_KEY = 'OFFLINE_QUEUE_V1';
 
@@ -13,12 +13,12 @@ export type OfflineRequest = {
 };
 
 async function getQueue(): Promise<OfflineRequest[]> {
-  const raw = await AsyncStorage.getItem(QUEUE_KEY);
+  const raw = await storage.getItem(QUEUE_KEY);
   return raw ? JSON.parse(raw) : [];
 }
 
 async function saveQueue(queue: OfflineRequest[]) {
-  await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+  await storage.setItem(QUEUE_KEY, JSON.stringify(queue));
 }
 
 export async function enqueueRequest(req: Omit<OfflineRequest, 'id' | 'timestamp'>) {
@@ -44,13 +44,7 @@ export async function processQueue(limit = 10) {
 
   for (const item of queue.slice(0, limit)) {
     try {
-      const config: any = {
-        method: item.method,
-        url: item.url,
-        data: item.body,
-        headers: item.headers || {},
-      };
-      await axiosClient.request(config);
+      await applyOfflineRequest(item);
       if (__DEV__) console.log('✅ Synced offline request', item.id, item.method, item.url);
     } catch (err: unknown) {
       // Keep the item for later retry
@@ -72,13 +66,7 @@ export async function processQueueItem(id: string) {
 
   const item = queue[idx];
   try {
-    const config: any = {
-      method: item.method,
-      url: item.url,
-      data: item.body,
-      headers: item.headers || {},
-    };
-    await axiosClient.request(config);
+    await applyOfflineRequest(item);
     if (__DEV__) console.log('✅ Synced offline request', item.id, item.method, item.url);
     const next = queue.filter((q) => q.id !== id);
     await saveQueue(next);
@@ -121,3 +109,64 @@ export default {
   stopBackgroundSync,
   clearQueue,
 };
+
+async function applyOfflineRequest(item: OfflineRequest) {
+  // The app currently enqueues only a small set of mutations.
+  // Apply them directly to the local data store (no axios / no react-native).
+  const url = item.url;
+
+  if (item.method === 'POST' && url === '/trips') {
+    const body = item.body ?? {};
+    const created = await dataService.createTrip({
+      trip_number: body.trip_number,
+      vehicle_id: Number(body.vehicle_id),
+      driver_id: Number(body.driver_id),
+      a_code: body.a_code,
+      destination_from: body.destination_from,
+      destination_to: body.destination_to,
+      status: body.status || 'not_started',
+      mileage: body.mileage,
+      driver_description: body.driver_description,
+      admin_description: body.admin_description,
+      trip_date: body.trip_date,
+      invoice_number: body.invoice_number,
+      amount: body.amount,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any);
+
+    if (Array.isArray(body.stops)) {
+      for (const stop of body.stops) {
+        if (!stop?.destination) continue;
+        await dataService.createTripStop({
+          trip_id: created.id,
+          destination: stop.destination,
+          stop_order: Number(stop.stop_order ?? 1),
+          notes: stop.notes,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as any);
+      }
+    }
+
+    return;
+  }
+
+  const tripPut = url.match(/^\/trips\/(\d+)$/);
+  if (item.method === 'PUT' && tripPut) {
+    const id = Number(tripPut[1]);
+    const updated = await dataService.updateTrip(id, item.body ?? {});
+    if (!updated) throw new Error(`Trip ${id} not found`);
+    return;
+  }
+
+  const tripDelete = url.match(/^\/trips\/(\d+)$/);
+  if (item.method === 'DELETE' && tripDelete) {
+    const id = Number(tripDelete[1]);
+    const ok = await dataService.deleteTrip(id);
+    if (!ok) throw new Error(`Trip ${id} not found`);
+    return;
+  }
+
+  throw new Error(`Unsupported offline request: ${item.method} ${url}`);
+}

@@ -15,28 +15,122 @@ interface Database {
 
 let dbData: Database | null = null;
 let nextIds: { [key: string]: number } = {};
+const STORAGE_KEY = 'SWEETTRIP_LOCAL_DB_V2';
+
+function hasLocalStorage() {
+  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+}
+
+function toFiniteId(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : value == null ? NaN : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function maxFiniteId(items: Array<{ id: unknown }> | null | undefined): number {
+  const ids = (items ?? [])
+    .map((i) => toFiniteId((i as any)?.id))
+    .filter((n): n is number => n != null && n !== 0);
+  return ids.length ? Math.max(...ids) : 0;
+}
+
+function sanitizeIds(db: Database) {
+  // If any entries have invalid ids (null/undefined/NaN/0), assign new ones
+  // and keep referential integrity for trip_stops.trip_id.
+  const tripIdMap = new Map<any, number>();
+
+  let maxTripId = maxFiniteId(db.trips as any);
+  for (const t of db.trips as any[]) {
+    const current = toFiniteId(t?.id);
+    if (current == null || current === 0) {
+      const next = ++maxTripId;
+      tripIdMap.set(t?.id, next);
+      t.id = next;
+    }
+  }
+
+  // Trip stops
+  let maxStopId = maxFiniteId(db.trip_stops as any);
+  for (const s of db.trip_stops as any[]) {
+    const sid = toFiniteId(s?.id);
+    if (sid == null || sid === 0) {
+      s.id = ++maxStopId;
+    }
+    const tid = toFiniteId(s?.trip_id);
+    if (tid == null || tid === 0) {
+      // if it was null/0, we can't know which trip it belonged to; keep as-is
+      // (better than attaching to the wrong trip). UI won't show these stops anyway.
+      continue;
+    }
+  }
+
+  // Users/Vehicles/Roles: ensure ids are finite and non-zero (no cross-table refs used in this local layer)
+  const fixTable = (arr: any[], key: keyof typeof nextIds) => {
+    let maxId = maxFiniteId(arr);
+    for (const row of arr) {
+      const id = toFiniteId(row?.id);
+      if (id == null || id === 0) row.id = ++maxId;
+    }
+    nextIds[key] = maxId;
+  };
+
+  fixTable(db.users as any[], 'users');
+  fixTable(db.vehicles as any[], 'vehicles');
+  fixTable(db.roles as any[], 'roles');
+
+  // Persist any fixes
+  persistDb();
+}
+
+function persistDb() {
+  if (!hasLocalStorage() || !dbData) return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dbData));
+  } catch {
+    // ignore quota / disabled storage
+  }
+}
+
+function tryLoadFromStorage(): Database | null {
+  if (!hasLocalStorage()) return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as Database;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Initialize the local database from db.json
  */
 export async function initializeLocalDatabase(): Promise<void> {
   try {
-    // For Expo, we'll use a public/api/db.json file
-    const response = await fetch('/api/db.json');
-    if (!response.ok) {
-      throw new Error(`Failed to load db.json: ${response.statusText}`);
+    const stored = tryLoadFromStorage();
+    if (stored) {
+      dbData = stored;
+    } else {
+      // Seed from static file
+      const response = await fetch('/api/db.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load db.json: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      dbData = data;
+      persistDb();
     }
 
-    const data = await response.json();
-    dbData = data;
+    // Fix up any invalid/missing ids from older cached DBs.
+    sanitizeIds(dbData);
 
     // Calculate next IDs for each table
     nextIds = {
-      users: Math.max(...(dbData?.users?.map(u => u.id) || [0])) + 1,
-      vehicles: Math.max(...(dbData?.vehicles?.map(v => v.id) || [0])) + 1,
-      trips: Math.max(...(dbData?.trips?.map(t => t.id) || [0])) + 1,
-      trip_stops: Math.max(...(dbData?.trip_stops?.map(ts => ts.id) || [0])) + 1,
-      roles: Math.max(...(dbData?.roles?.map(r => r.id) || [0])) + 1,
+      users: maxFiniteId(dbData?.users as any),
+      vehicles: maxFiniteId(dbData?.vehicles as any),
+      trips: maxFiniteId(dbData?.trips as any),
+      trip_stops: maxFiniteId(dbData?.trip_stops as any),
+      roles: maxFiniteId(dbData?.roles as any),
     };
 
     console.log('✅ Local database initialized successfully');
@@ -60,7 +154,10 @@ function getDatabase(): Database {
  * Get next ID for a table
  */
 function getNextId(table: string): number {
-  return (nextIds[table] = (nextIds[table] || 1) + 1);
+  const current = nextIds[table] ?? 0;
+  const next = current + 1;
+  nextIds[table] = next;
+  return next;
 }
 
 /**
@@ -121,6 +218,7 @@ export async function createUser(user: Omit<User, 'id'>): Promise<User> {
     id: getNextId('users'),
   };
   db.users.push(newUser);
+  persistDb();
   return newUser;
 }
 
@@ -129,6 +227,7 @@ export async function updateUser(id: number, updates: Partial<User>): Promise<Us
   const user = findOne(db.users, u => u.id === id);
   if (!user) return null;
   Object.assign(user, updates);
+  persistDb();
   return user;
 }
 
@@ -137,6 +236,7 @@ export async function deleteUser(id: number): Promise<boolean> {
   const index = db.users.findIndex(u => u.id === id);
   if (index === -1) return false;
   db.users.splice(index, 1);
+  persistDb();
   return true;
 }
 
@@ -174,6 +274,7 @@ export async function createVehicle(vehicle: Omit<Vehicle, 'id'>): Promise<Vehic
     id: getNextId('vehicles'),
   };
   db.vehicles.push(newVehicle);
+  persistDb();
   return newVehicle;
 }
 
@@ -182,6 +283,7 @@ export async function updateVehicle(id: number, updates: Partial<Vehicle>): Prom
   const vehicle = findOne(db.vehicles, v => v.id === id);
   if (!vehicle) return null;
   Object.assign(vehicle, updates);
+  persistDb();
   return vehicle;
 }
 
@@ -190,6 +292,7 @@ export async function deleteVehicle(id: number): Promise<boolean> {
   const index = db.vehicles.findIndex(v => v.id === id);
   if (index === -1) return false;
   db.vehicles.splice(index, 1);
+  persistDb();
   return true;
 }
 
@@ -251,6 +354,7 @@ export async function createTrip(trip: Omit<Trip, 'id'>): Promise<Trip> {
     id: getNextId('trips'),
   };
   db.trips.push(newTrip);
+  persistDb();
   return newTrip;
 }
 
@@ -259,6 +363,7 @@ export async function updateTrip(id: number, updates: Partial<Trip>): Promise<Tr
   const trip = findOne(db.trips, t => t.id === id);
   if (!trip) return null;
   Object.assign(trip, updates);
+  persistDb();
   return trip;
 }
 
@@ -269,11 +374,13 @@ export async function deleteTrip(id: number): Promise<boolean> {
   db.trips.splice(index, 1);
   
   // Also delete associated trip stops
-  const stopIndex = db.trip_stops.findIndex(ts => ts.trip_id === id);
-  while (stopIndex !== -1) {
+  while (true) {
+    const stopIndex = db.trip_stops.findIndex((ts) => ts.trip_id === id);
+    if (stopIndex === -1) break;
     db.trip_stops.splice(stopIndex, 1);
   }
   
+  persistDb();
   return true;
 }
 
@@ -327,6 +434,7 @@ export async function createTripStop(stop: Omit<TripStop, 'id'>): Promise<TripSt
     id: getNextId('trip_stops'),
   };
   db.trip_stops.push(newStop);
+  persistDb();
   return newStop;
 }
 
@@ -335,6 +443,7 @@ export async function updateTripStop(id: number, updates: Partial<TripStop>): Pr
   const stop = findOne(db.trip_stops, ts => ts.id === id);
   if (!stop) return null;
   Object.assign(stop, updates);
+  persistDb();
   return stop;
 }
 
@@ -343,6 +452,7 @@ export async function deleteTripStop(id: number): Promise<boolean> {
   const index = db.trip_stops.findIndex(ts => ts.id === id);
   if (index === -1) return false;
   db.trip_stops.splice(index, 1);
+  persistDb();
   return true;
 }
 
