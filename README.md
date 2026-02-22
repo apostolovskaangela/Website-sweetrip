@@ -1,119 +1,62 @@
-# SweetTrip (Sweetrip) — Fleet Management (React Native / Expo)
+## SweetTrip — Fleet Management Website (React + Vite)
 
-SweetTrip is a fleet management mobile app where managers create and assign trips to drivers, drivers can view and update their trips, and all authorized users can track live locations.
+SweetTrip is a fleet management system where **managers** create/assign trips and manage vehicles, and **drivers** view/update their assigned trips.
 
-## Features
+This repo is now a **web app** (Vite + React) and is ready to deploy on **Vercel**.
 
-- **Role-aware navigation**: menu items adapt to the logged-in user’s role (see `src/roles/` + `src/hooks/useMenuItems.ts`)
-- **Trips & Vehicles CRUD**: list/create/edit/details flows with server-state caching (React Query)
-- **Live tracking**:
-  - Drivers can share location updates (foreground tracking)
-  - Managers can view driver positions on the map (Live Tracking screen)
-- **Offline support**:
-  - Mutations can be queued to local storage and synced later (see `src/services/offline.ts`)
-  - Local SQLite DB is initialized on first run (see `src/services/db/`)
-- **Real-time scaffolding**:
-  - WebSocket service exists (`src/services/realtime/socket.ts`)
-  - Driver-side WS tracking sender exists (`src/services/location/driverTracking.ts`)
-- **Accessibility**:
-  - Key entry points and navigation buttons include labels/roles and keyboard-friendly flow
-- **Dark/Light theme**:
-  - React Native Paper MD3 theme is provided globally (see `src/theme/paperTheme.ts`)
-   
-## Tech stack
+### Features
 
-- **Expo** + **React Native**
-- **React Navigation** (stack + drawer)
-- **React Query (@tanstack/react-query)** for server-state caching, retries, and invalidation
-- **React Native Paper** for UI components with MD3 theming
-- **Axios** for HTTP
-- **expo-location** for location permissions + tracking
-- **expo-sqlite** for local persistence
+- **Role-based access**: managers/admins vs drivers (`src/roles/`)
+- **Trips & Vehicles**: list/create/edit/details
+- **Driver trip status updates** (with CMR upload requirement on completion)
+- **Offline mode**
+  - mutations queue in local storage and can be retried (`src/services/offline.ts`)
+- **Local seed database**
+  - app seeds from `public/api/db.json`
+  - persisted in browser localStorage (`src/lib/sqlite/dataService.ts`)
 
-## Project structure (high-level)
+### Tech stack
 
-- `app/App.tsx`: app root (providers, offline sync bootstrap, SQLite init)
-- `src/context/Auth/`: Auth state + actions (Context API + repository pattern)
-- `src/services/api/`: API clients (trips/vehicles/users/auth)
-- `src/hooks/queries/`: React Query hooks (queries + optimistic mutation patterns)
-- `src/services/offline.ts`: offline queue + background sync
-- `src/services/location/`: location tracking utilities
-- `src/services/realtime/`: WebSocket client
-- `src/screens/`: screen modules (UI + `logic.tsx` + `styles.ts`)
-- `docs/`: API + performance notes
+- **React 19**
+- **Vite**
+- **React Router**
+- **MUI (Material UI)**
+- **TanStack React Query**
 
-## Setup
-
-### 1) Install dependencies
+## Local development
 
 ```bash
 npm install
+npm run dev
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Open `http://localhost:5173/`.
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-### 3) (Optional) Configure WebSocket URL
-
-The WebSocket URL is currently hardcoded in `src/services/realtime/socket.ts`. If your backend WS host/port differs, update it there.
-
-### 4) Start the app
+## Build
 
 ```bash
-npx expo start
+npm run build
 ```
 
-## Testing
+The production output is in `dist/`.
 
-```bash
-npm test
-```
+## Deploy to Vercel
 
-Coverage:
+- **Framework preset**: Vite
+- **Build command**: `npm run build`
+- **Output directory**: `dist`
 
-```bash
-npm run test:coverage
-```
+Client-side routing is handled via `vercel.json` rewrites.
 
-Integration test config (templates included):
+## Login credentials (seeded)
 
-```bash
-npm run test:integration
-```
+These users come from `public/api/db.json`:
 
-If `npm install` fails with peer dependency errors, run:
-
-```bash
-npm install --legacy-peer-deps
-```
-
-## Login credentials
-
-- **Managers**: 
-  - Email: jovan@example.com Password:123123123
-  - Email: kenan@example.com Password:123123123
-- **Drivers**:
-  - Email: angelique@example.com Password:password
-  - Email: nellie@example.com Password:password
-- **CEO**:
-  - Email: ceo@example.com Password:password
-- **Admin**:
-  - Email: admin@example.com Password:password
-
-
-## Docs
-
-- API reference: `docs/API.md`
-- Performance notes: `docs/PERFORMANCE.md`
-- E2E scaffolding: `e2e/README.md`
+<!-- - **Manager**
+  - Email: `operations@mdatransport.se`
+  - Password: `Mdatransport123@`
+- **Drivers**
+  - Email: `sokol@driver.com`
+  - Password: `sokolDriver1!`
+  - (see more in `public/api/db.json`) -->
 

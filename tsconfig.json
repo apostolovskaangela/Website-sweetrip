@@ -20,5 +20,17 @@
     "**/*.ts",
     "**/*.tsx",
     "vite.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "app",
+    "src/screens",
+    "src/navigation",
+    "src/components",
+    "src/theme",
+    "sqlite",
+    "e2e"
   ]
 }
