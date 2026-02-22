@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Platform, Alert } from 'react-native';
+import { Alert } from 'react-native';
 
 export interface ImagePickerResult {
   uri: string;

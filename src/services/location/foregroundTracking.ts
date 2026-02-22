@@ -24,6 +24,7 @@ export async function startUserForegroundTracking(): Promise<void> {
     });
   } catch (e) {
     // Ignore (permissions/timeout/etc.)
+    console.log( `Error updating location ${e}`)
   }
 
   subscription = await Location.watchPositionAsync(

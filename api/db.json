@@ -72,7 +72,7 @@
       "email": "embla@driver.com",
       "password": "emblaDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null
@@ -83,7 +83,7 @@
       "email": "sokol@driver.com",
       "password": "sokolDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null
@@ -94,7 +94,7 @@
       "email": "srdzan@driver.com",
       "password": "srdzanDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null
@@ -105,7 +105,7 @@
       "email": "ingemar@driver.com",
       "password": "ingemarDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null
@@ -116,7 +116,7 @@
       "email": "fei@driver.com",
       "password": "feiDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null
@@ -127,7 +127,7 @@
       "email": "troels@driver.com",
       "password": "troelsDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null
@@ -138,7 +138,7 @@
       "email": "alex@driver.com",
       "password": "alexDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null
@@ -149,7 +149,7 @@
       "email": "janne@driver.com",
       "password": "janneDriver1!",
       "role_id": 4,
-      "manager_id": 3,
+      "manager_id": 2,
       "last_latitude": null,
       "last_longitude": null,
       "last_location_at": null

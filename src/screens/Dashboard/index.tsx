@@ -69,7 +69,7 @@ export const Dashboard = () => {
 
         <StatCard
           title="Efficiency"
-          value={`${stats.efficiency}%`}
+          value = {`${(stats.efficiency ?? 0).toFixed(2)}%`}
           icon={<MaterialCommunityIcons name="trending-up" size={24} />}
         />
       </View>

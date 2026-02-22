@@ -10,7 +10,7 @@ export interface LiveDriver {
   last_location_at?: string;
 }
 
-export function useLiveDrivers(_driverId?: number, pollingInterval = 5000) {
+export function useLiveDrivers(_driverId?: number, interval = 5000) {
   const [drivers, setDrivers] = useState<LiveDriver[]>([]);
   const intervalIdRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -26,7 +26,7 @@ export function useLiveDrivers(_driverId?: number, pollingInterval = 5000) {
     }
 
     fetchDrivers();
-    intervalIdRef.current = setInterval(fetchDrivers, pollingInterval);
+    intervalIdRef.current = setInterval(fetchDrivers, interval);
 
     return () => {
       if (intervalIdRef.current != null) {
@@ -34,7 +34,7 @@ export function useLiveDrivers(_driverId?: number, pollingInterval = 5000) {
         intervalIdRef.current = null;
       }
     };
-  }, [pollingInterval]);
+  }, [interval]);
 
   return { drivers };
 }

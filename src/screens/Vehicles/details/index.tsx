@@ -27,6 +27,12 @@ export default function VehicleDetails() {
   const roleHandler = RoleFactory.createFromUser({ roles: user?.roles });
   const canViewVehicles = roleHandler?.canViewVehicles?.() ?? false;
 
+  useFocusEffect(
+    useCallback(() => {
+      loadVehicle();
+    }, [id])
+  );
+
   if (!canViewVehicles) {
     return (
       <Screen accessibilityLabel="Vehicle details restricted">
@@ -43,12 +49,6 @@ export default function VehicleDetails() {
       </Screen>
     );
   }
-
-  useFocusEffect(
-    useCallback(() => {
-      loadVehicle();
-    }, [id])
-  );
 
   if (loading)
     return (

@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { Animated } from 'react-native';
 import { IconButton, useTheme } from 'react-native-paper';
-import { useThemeMode } from '@/src/theme/useThemeMode';
+import { useThemeMode } from '@/src/hooks/useThemeMode';
 
 type Props = {
   size?: number;

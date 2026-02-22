@@ -1,9 +1,8 @@
 import React, { useMemo } from "react";
 import { View } from "react-native";
-import { Card } from "react-native-paper";
 import { makeStyles } from "./styles";
 import { StatCardProps } from "../types";
-import { Text, useTheme } from "react-native-paper";
+import { Text, useTheme, Card } from "react-native-paper";
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, trendUp }) => {
   const theme = useTheme();

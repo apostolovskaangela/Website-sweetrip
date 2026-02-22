@@ -1,108 +1,99 @@
-import { StyleSheet, Dimensions } from "react-native";
+import { Dimensions, StyleSheet } from 'react-native';
 
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 40,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   themeToggleContainer: {
-    position: "absolute",
+    position: 'absolute',
     top: 10,
     right: 10,
     zIndex: 10,
   },
   contentWrapper: {
-    width: "100%",
+    width: '100%',
     maxWidth: 520,
-    alignItems: "center",
+    alignItems: 'center',
   },
   fadeButtonWrapper: {
-    width: "100%",
+    width: '100%',
     marginTop: 14,
   },
-  heroTitle: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  heroHighlight: {
-    color: "#FFA500",
-  },
-  heroSubtitle: {
-    fontSize: 18,
-    color: "rgba(255,255,255,0.9)",
-    textAlign: "center",
-    marginBottom: 24,
-    maxWidth: width * 0.85,
-  },
   button: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
   },
   buttonCentered: {
-    alignSelf: "center",
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
-  },
-  featuresGrid: {
-    marginTop: 32,
-    width: "100%",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  featureCard: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-    marginBottom: 16,
-    width: "30%",
-    alignItems: "center",
-  },
-  featureIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "#ccc",
-    marginBottom: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  featureText: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
-    textAlign: "center",
+    alignSelf: 'center',
   },
   title: {
-    color: "white",
+    color: 'white',
     fontSize: 30,
-    fontWeight: "800",
+    fontWeight: '800',
+    textAlign: 'center',
   },
   subtitle: {
     color: '#F97316',
     fontSize: 30,
-    fontWeight: "800",
+    fontWeight: '800',
     marginBottom: 7,
-  }
+    textAlign: 'center',
+  },
+
+  featuresGrid: {
+    marginTop: 40,
+    width: '100%',
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+
+  featureCard: {
+    width: 380,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    marginBottom: 20,
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+
+  featureIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,255,204,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(0,255,204,0.3)',
+  },
+
+  featureTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+
+  featureDesc: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.80)',
+    textAlign: 'center',
+    lineHeight: 22,
+    fontWeight: '400',
+  },
 });

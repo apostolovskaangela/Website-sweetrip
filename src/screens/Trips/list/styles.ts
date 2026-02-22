@@ -41,7 +41,7 @@ export const makeStyles = (theme: MD3Theme) =>
       color: theme.colors.error,
     },
     listContent: {
-      paddingBottom: 24,
+      paddingBottom: 96
     },
     tripCard: {
       backgroundColor: theme.colors.elevation.level1,

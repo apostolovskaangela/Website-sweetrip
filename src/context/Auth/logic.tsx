@@ -54,9 +54,9 @@ export const useAuthLogic = () => {
         }
     }, []);
 
-    const register = useCallback(async (email: string, password: string, name?: string) => {
-        await login(email, password);
-    }, [login]);
+    // const register = useCallback(async (email: string, password: string, name?: string) => {
+    //     await login(email, password);
+    // }, [login]);
 
     const logout = useCallback(async () => {
         try {
@@ -94,5 +94,5 @@ export const useAuthLogic = () => {
         });
     }, []);
 
-    return { state, login, register, logout, clearError, refreshUser, updateUser };
+    return { state, login, logout, clearError, refreshUser, updateUser };
 };

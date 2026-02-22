@@ -4,7 +4,7 @@ import { CREATE_TABLES_SQL, SCHEMA_VERSION } from './schema';
 import { nowIso, toSqlBool } from './utils';
 
 // Bump this when you change `api/db.json` seed data (users/credentials/etc).
-const SEED_VERSION = 3;
+const SEED_VERSION = 4;
 
 type SeedUser = {
   id: number;

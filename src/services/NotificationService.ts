@@ -1,4 +1,3 @@
-// NotificationService.ts
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
@@ -30,6 +29,5 @@ export async function registerForPushNotificationsAsync() {
   token = (await Notifications.getExpoPushTokenAsync()).data;
   console.log("Expo push token:", token);
 
-  // Send this token to your backend for the logged-in user
   return token;
 }

@@ -11,7 +11,6 @@ const BASE_URL = API_CONFIG.BASE_URL;
 if (__DEV__) {
   console.log('🌐 API Base URL:', BASE_URL);
   console.log('📱 Platform:', Platform.OS);
-  console.log('💡 SweetTrip is running in local SQLite mode.');
 }
 
 // Create axios instance

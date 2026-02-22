@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosClient from '../axiosClient';
 import { enqueueRequest } from '../offline';
+import { checkInternetNow } from '@/src/services/internetStatus';
 // SDK 54+ deprecates the legacy namespace exports from `expo-file-system`.
 // Use the legacy API explicitly to avoid runtime errors in Expo Go / SDK 54.
 import * as FileSystem from 'expo-file-system/legacy';
@@ -147,6 +148,12 @@ export const tripsApi = {
   },
 
   create: async (data: CreateTripRequest): Promise<CreateTripResponse> => {
+    const isOffline = await checkInternetNow();
+    if (isOffline) {
+      await enqueueRequest({ method: 'POST', url: '/trips', body: data });
+      const tempTrip: any = { id: -Date.now(), ...data };
+      return { message: 'created_offline', trip: tempTrip } as unknown as CreateTripResponse;
+    }
     try {
       const response = await axiosClient.post<CreateTripResponse>('/trips', data);
       return response.data;
@@ -159,6 +166,12 @@ export const tripsApi = {
   },
 
   update: async (id: number, data: UpdateTripRequest): Promise<CreateTripResponse> => {
+    const isOffline = await checkInternetNow();
+    if (isOffline) {
+      await enqueueRequest({ method: 'PUT', url: `/trips/${id}`, body: data });
+      const tempTrip: any = { id, ...data };
+      return { message: 'updated_offline', trip: tempTrip } as unknown as CreateTripResponse;
+    }
     try {
       const response = await axiosClient.put<CreateTripResponse>(`/trips/${id}`, data);
       return response.data;
@@ -170,6 +183,11 @@ export const tripsApi = {
   },
 
   delete: async (id: number): Promise<void> => {
+    const isOffline = await checkInternetNow();
+    if (isOffline) {
+      await enqueueRequest({ method: 'DELETE', url: `/trips/${id}` });
+      return;
+    }
     try {
       await axiosClient.delete(`/trips/${id}`);
     } catch (err: any) {
