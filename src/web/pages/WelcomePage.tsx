@@ -42,9 +42,6 @@ export function WelcomePage() {
               <Button variant="contained" size="large" onClick={() => navigate('/login')}>
                 Login
               </Button>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
-                Use a seeded user from <code>api/db.json</code>.
-              </Typography>
             </Box>
 
             <Grid container spacing={2}>
