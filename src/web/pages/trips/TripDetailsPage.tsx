@@ -17,6 +17,7 @@ import { tripsApi, type Trip } from '@/src/services/api/trips';
 import { useAuth } from '@/src/hooks/useAuth';
 import { RoleFactory } from '@/src/roles';
 import { StatusChip } from '@/src/web/components/StatusChip';
+import { useTripMutations, useTripQuery } from '@/src/hooks/queries';
 
 const STATUS_OPTIONS = [
   { value: 'not_started', label: 'Not Started' },
@@ -33,39 +34,32 @@ export function TripDetailsPage() {
 
   const roleHandler = useMemo(() => (user ? RoleFactory.createFromUser({ roles: user.roles }) : null), [user]);
 
-  const [trip, setTrip] = useState<Trip | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
   const [cmrFile, setCmrFile] = useState<File | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [localErr, setLocalErr] = useState<string | null>(null);
+
+  const tripQuery = useTripQuery(Number.isFinite(tripId) && tripId !== 0 ? tripId : null);
+  const { updateTripStatus, updateTripStatusMutation } = useTripMutations();
+
+  const trip = (tripQuery.data as Trip | undefined) ?? null;
+  const loading = tripQuery.isLoading;
+  const err = (tripQuery.error as any)?.message ?? null;
+  const tripStatus = trip?.status;
+
+  React.useEffect(() => {
+    if (!tripStatus) return;
+    setStatus(tripStatus);
+  }, [tripStatus]);
 
   const canEdit = roleHandler?.canEditTrip?.() ?? false;
   const canDriverUpdate = roleHandler?.canUpdateTripStatus?.(user?.id ?? '', trip?.driver?.id) ?? false;
-
-  const load = React.useCallback(async () => {
-    setLoading(true);
-    setErr(null);
-    try {
-      const t = await tripsApi.get(tripId);
-      setTrip(t);
-      setStatus(t.status);
-    } catch (e: any) {
-      setErr(e?.message ?? 'Failed to load trip');
-    } finally {
-      setLoading(false);
-    }
-  }, [tripId]);
-
-  React.useEffect(() => {
-    if (!Number.isFinite(tripId)) return;
-    load();
-  }, [load, tripId]);
+  const canViewFinancials = roleHandler?.canViewTripFinancials?.() ?? false;
+  const canViewNotes = roleHandler?.canViewTripNotes?.() ?? false;
+  const canViewMileage = roleHandler?.canViewTripMileage?.() ?? false;
 
   const onUpdateStatus = async () => {
     if (!trip) return;
-    setSaving(true);
-    setErr(null);
+    setLocalErr(null);
     try {
       if (status === 'completed') {
         if (!cmrFile && !trip.cmr && !trip.cmr_url) {
@@ -76,12 +70,9 @@ export function TripDetailsPage() {
           await tripsApi.uploadCMR(tripId, { name: cmrFile.name, uri, type: cmrFile.type } as any);
         }
       }
-      await tripsApi.updateStatus(tripId, { status: status as any });
-      await load();
+      await updateTripStatus({ id: tripId, status: { status: status as any } });
     } catch (e: any) {
-      setErr(e?.message ?? 'Failed to update status');
-    } finally {
-      setSaving(false);
+      setLocalErr(e?.message ?? 'Failed to update status');
     }
   };
 
@@ -122,9 +113,9 @@ export function TripDetailsPage() {
         </Box>
       </Box>
 
-      {!!err && (
+      {!!(localErr || err) && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {err}
+          {localErr || err}
         </Alert>
       )}
 
@@ -150,19 +141,24 @@ export function TripDetailsPage() {
                 <strong>Driver notes:</strong> {trip.driver_description}
               </Typography>
             )}
-            {!!trip.admin_description && (
+            {canViewNotes && !!trip.admin_description && (
               <Typography>
                 <strong>Admin notes:</strong> {trip.admin_description}
               </Typography>
             )}
-            {!!trip.invoice_number && (
+            {canViewFinancials && !!trip.invoice_number && (
               <Typography>
                 <strong>Invoice:</strong> {trip.invoice_number}
               </Typography>
             )}
-            {trip.amount != null && (
+            {canViewFinancials && trip.amount != null && (
               <Typography>
                 <strong>Amount:</strong> {trip.amount}
+              </Typography>
+            )}
+            {canViewMileage && trip.mileage != null && (
+              <Typography>
+                <strong>Mileage:</strong> {trip.mileage} km
               </Typography>
             )}
             {!!trip.cmr_url && (
@@ -204,8 +200,12 @@ export function TripDetailsPage() {
                 </Box>
               )}
 
-              <Button variant="contained" onClick={onUpdateStatus} disabled={saving}>
-                {saving ? 'Saving…' : 'Update'}
+              <Button
+                variant="contained"
+                onClick={onUpdateStatus}
+                disabled={updateTripStatusMutation.isPending}
+              >
+                {updateTripStatusMutation.isPending ? 'Saving…' : 'Update'}
               </Button>
             </Box>
           </CardContent>

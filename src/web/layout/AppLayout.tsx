@@ -21,6 +21,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import RouteIcon from '@mui/icons-material/Route';
 import CloudOffIcon from '@mui/icons-material/CloudOff';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
@@ -57,9 +58,10 @@ export function AppLayout() {
       { label: 'Dashboard', path: '/app/dashboard', icon: <DashboardIcon /> },
       { label: 'Trips', path: '/app/trips', icon: <RouteIcon /> },
       { label: 'Vehicles', path: '/app/vehicles', icon: <LocalShippingIcon />, hidden: !(roleHandler?.canViewVehicles?.() ?? false) },
+      { label: 'Admin', path: '/app/admin', icon: <AdminPanelSettingsIcon />, hidden: !(user?.roles?.includes('admin') ?? false) },
       { label: 'Offline Queue', path: '/app/offline-queue', icon: <CloudOffIcon />, hidden: !isOffline },
     ],
-    [isOffline, roleHandler]
+    [isOffline, roleHandler, user?.roles]
   );
 
   const onNav = (path: string) => {
@@ -276,6 +278,7 @@ function getHeaderTitle(pathname: string) {
   if (pathname.startsWith('/app/trips')) return 'Trips';
   if (pathname.startsWith('/app/vehicles')) return 'Vehicles';
   if (pathname.startsWith('/app/offline-queue')) return 'Offline Queue';
+  if (pathname.startsWith('/app/admin')) return 'Admin';
   return 'Dashboard';
 }
 

@@ -3,7 +3,7 @@
  * This service provides in-memory data management with localStorage support
  */
 
-import { User, Vehicle, Trip, TripStop, Role } from './models';
+import { Role, Trip, TripStop, User, Vehicle } from './models';
 
 interface Database {
   users: User[];
@@ -26,7 +26,7 @@ function toFiniteId(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function maxFiniteId(items: Array<{ id: unknown }> | null | undefined): number {
+function maxFiniteId(items: { id: unknown }[] | null | undefined): number {
   const ids = (items ?? [])
     .map((i) => toFiniteId((i as any)?.id))
     .filter((n): n is number => n != null && n !== 0);
@@ -34,6 +34,13 @@ function maxFiniteId(items: Array<{ id: unknown }> | null | undefined): number {
 }
 
 function sanitizeIds(db: Database) {
+  // Normalize shape for older cached DBs (avoid "arr is not iterable")
+  (db as any).users = Array.isArray((db as any).users) ? (db as any).users : [];
+  (db as any).vehicles = Array.isArray((db as any).vehicles) ? (db as any).vehicles : [];
+  (db as any).trips = Array.isArray((db as any).trips) ? (db as any).trips : [];
+  (db as any).trip_stops = Array.isArray((db as any).trip_stops) ? (db as any).trip_stops : [];
+  (db as any).roles = Array.isArray((db as any).roles) ? (db as any).roles : [];
+
   // If any entries have invalid ids (null/undefined/NaN/0), assign new ones
   // and keep referential integrity for trip_stops.trip_id.
   const tripIdMap = new Map<any, number>();
@@ -64,18 +71,19 @@ function sanitizeIds(db: Database) {
   }
 
   // Users/Vehicles/Roles: ensure ids are finite and non-zero (no cross-table refs used in this local layer)
-  const fixTable = (arr: any[], key: keyof typeof nextIds) => {
-    let maxId = maxFiniteId(arr);
-    for (const row of arr) {
+  const fixTable = (arr: unknown, key: keyof typeof nextIds) => {
+    const rows: any[] = Array.isArray(arr) ? (arr as any[]) : [];
+    let maxId = maxFiniteId(rows);
+    for (const row of rows) {
       const id = toFiniteId(row?.id);
       if (id == null || id === 0) row.id = ++maxId;
     }
     nextIds[key] = maxId;
   };
 
-  fixTable(db.users as any[], 'users');
-  fixTable(db.vehicles as any[], 'vehicles');
-  fixTable(db.roles as any[], 'roles');
+  fixTable((db as any).users, 'users');
+  fixTable((db as any).vehicles, 'vehicles');
+  fixTable((db as any).roles, 'roles');
 
   // Persist any fixes
   persistDb();
@@ -101,14 +109,32 @@ function tryLoadFromStorage(): Database | null {
   }
 }
 
+function isValidDatabaseShape(value: any): value is Database {
+  return (
+    value &&
+    Array.isArray(value.users) &&
+    Array.isArray(value.vehicles) &&
+    Array.isArray(value.trips) &&
+    Array.isArray(value.trip_stops) &&
+    Array.isArray(value.roles)
+  );
+}
+
 /**
  * Initialize the local database from db.json
  */
 export async function initializeLocalDatabase(): Promise<void> {
   try {
     const stored = tryLoadFromStorage();
-    if (stored) {
+    if (stored && isValidDatabaseShape(stored)) {
       dbData = stored;
+    } else if (stored && hasLocalStorage()) {
+      // Corrupted/partial cached DB from an older version → reseed
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // ignore
+      }
     } else {
       // Seed from static file
       const response = await fetch('/api/db.json');
@@ -119,6 +145,21 @@ export async function initializeLocalDatabase(): Promise<void> {
       const data = await response.json();
       dbData = data;
       persistDb();
+    }
+
+    if (!dbData) {
+      // If we removed a bad cached DB above, seed now
+      const response = await fetch('/api/db.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load db.json: ${response.statusText}`);
+      }
+      const data = await response.json();
+      dbData = data;
+      persistDb();
+    }
+
+    if (!dbData) {
+      throw new Error('Failed to initialize database');
     }
 
     // Fix up any invalid/missing ids from older cached DBs.
@@ -233,6 +274,13 @@ export async function updateUser(id: number, updates: Partial<User>): Promise<Us
 
 export async function deleteUser(id: number): Promise<boolean> {
   const db = getDatabase();
+
+  // Prevent deleting a driver that has trips (avoids orphaning trip.driver_id references)
+  const hasTrips = db.trips.some((t: any) => String((t as any)?.driver_id) === String(id));
+  if (hasTrips) {
+    throw new Error('Cannot delete driver: driver has trips assigned');
+  }
+
   const index = db.users.findIndex(u => u.id === id);
   if (index === -1) return false;
   db.users.splice(index, 1);
@@ -269,6 +317,16 @@ export async function getVehiclesByRegistration(registration: string): Promise<V
 
 export async function createVehicle(vehicle: Omit<Vehicle, 'id'>): Promise<Vehicle> {
   const db = getDatabase();
+  const reg = (vehicle.registration_number ?? '').trim();
+  if (reg) {
+    const exists = findOne(
+      db.vehicles,
+      (v) => String(v.registration_number ?? '').trim().toLowerCase() === reg.toLowerCase()
+    );
+    if (exists) {
+      throw new Error('Registration number already exists');
+    }
+  }
   const newVehicle: Vehicle = {
     ...vehicle,
     id: getNextId('vehicles'),
@@ -282,6 +340,19 @@ export async function updateVehicle(id: number, updates: Partial<Vehicle>): Prom
   const db = getDatabase();
   const vehicle = findOne(db.vehicles, v => v.id === id);
   if (!vehicle) return null;
+  if (updates.registration_number != null) {
+    const reg = String(updates.registration_number ?? '').trim();
+    if (reg) {
+      const exists = findOne(
+        db.vehicles,
+        (v) =>
+          v.id !== id && String(v.registration_number ?? '').trim().toLowerCase() === reg.toLowerCase()
+      );
+      if (exists) {
+        throw new Error('Registration number already exists');
+      }
+    }
+  }
   Object.assign(vehicle, updates);
   persistDb();
   return vehicle;
@@ -289,6 +360,13 @@ export async function updateVehicle(id: number, updates: Partial<Vehicle>): Prom
 
 export async function deleteVehicle(id: number): Promise<boolean> {
   const db = getDatabase();
+
+  // Prevent deleting vehicles that are referenced by trips
+  const hasTrips = db.trips.some((t: any) => String((t as any)?.vehicle_id) === String(id));
+  if (hasTrips) {
+    throw new Error('Cannot delete vehicle: vehicle is used by existing trips');
+  }
+
   const index = db.vehicles.findIndex(v => v.id === id);
   if (index === -1) return false;
   db.vehicles.splice(index, 1);
@@ -349,6 +427,17 @@ export async function getTripsByDateRange(startDate: string, endDate: string): P
 
 export async function createTrip(trip: Omit<Trip, 'id'>): Promise<Trip> {
   const db = getDatabase();
+  const tripNumber = String((trip as any).trip_number ?? '').trim();
+  if (!tripNumber) {
+    throw new Error('Trip number is required');
+  }
+  const exists = findOne(
+    db.trips,
+    (t) => String((t as any).trip_number ?? '').trim().toLowerCase() === tripNumber.toLowerCase()
+  );
+  if (exists) {
+    throw new Error('Trip number already exists');
+  }
   const newTrip: Trip = {
     ...trip,
     id: getNextId('trips'),
@@ -362,6 +451,20 @@ export async function updateTrip(id: number, updates: Partial<Trip>): Promise<Tr
   const db = getDatabase();
   const trip = findOne(db.trips, t => t.id === id);
   if (!trip) return null;
+  if ((updates as any).trip_number != null) {
+    const tripNumber = String((updates as any).trip_number ?? '').trim();
+    if (!tripNumber) {
+      throw new Error('Trip number is required');
+    }
+    const exists = findOne(
+      db.trips,
+      (t) =>
+        t.id !== id && String((t as any).trip_number ?? '').trim().toLowerCase() === tripNumber.toLowerCase()
+    );
+    if (exists) {
+      throw new Error('Trip number already exists');
+    }
+  }
   Object.assign(trip, updates);
   persistDb();
   return trip;

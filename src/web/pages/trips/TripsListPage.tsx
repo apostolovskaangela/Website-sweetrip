@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
@@ -17,11 +18,25 @@ import { StatusChip } from '@/src/web/components/StatusChip';
 
 export function TripsListPage() {
   const navigate = useNavigate();
+  const location = useLocation() as any;
   const tripsQuery = useTripsQuery();
   const permissionsQuery = useUserPermissionsQuery();
 
+  const flash = location?.state?.flash as { type?: 'success' | 'info' | 'error'; message?: string } | undefined;
+
+  React.useEffect(() => {
+    if (!flash?.message) return;
+    const t = window.setTimeout(() => {
+      // Clear location.state
+      navigate('.', { replace: true, state: null });
+    }, 3500);
+    return () => window.clearTimeout(t);
+  }, [flash?.message, navigate]);
+
   const loading = tripsQuery.isLoading || permissionsQuery.isLoading;
   const canCreate = permissionsQuery.data?.canCreateTrip ?? false;
+  const trips = tripsQuery.data ?? [];
+  const error = tripsQuery.error || permissionsQuery.error;
 
   if (loading) {
     return (
@@ -30,9 +45,6 @@ export function TripsListPage() {
       </Box>
     );
   }
-
-  const trips = tripsQuery.data ?? [];
-  const error = tripsQuery.error || permissionsQuery.error;
 
   return (
     <Box sx={{ maxWidth: 1180 }}>
@@ -54,6 +66,12 @@ export function TripsListPage() {
         <Paper variant="outlined" sx={{ mb: 2, p: 2 }}>
           <Typography color="error">Failed to load trips. Please try again.</Typography>
         </Paper>
+      )}
+
+      {!!flash?.message && (
+        <Alert severity={flash.type ?? 'info'} sx={{ mb: 2 }}>
+          {flash.message}
+        </Alert>
       )}
 
       <Box sx={{ display: 'grid', gap: 2 }}>

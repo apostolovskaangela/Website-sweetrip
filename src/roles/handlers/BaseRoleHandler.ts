@@ -35,6 +35,18 @@ export abstract class BaseRoleHandler implements IRoleHandler {
     return false;
   }
 
+  canViewTripFinancials(): boolean {
+    return false;
+  }
+
+  canViewTripNotes(): boolean {
+    return false;
+  }
+
+  canViewTripMileage(): boolean {
+    return false;
+  }
+
   getRoleName(): string {
     return this.roleName;
   }

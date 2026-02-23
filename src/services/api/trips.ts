@@ -1,6 +1,8 @@
 import * as dataService from '@/src/lib/sqlite/dataService';
 import { enqueueRequest } from '../offline';
 import { checkInternetNow } from '@/src/services/internetStatus';
+import { authApi } from './auth';
+import { RoleFactory } from '@/src/roles';
 
 export interface Trip {
   id: number;
@@ -112,12 +114,24 @@ export const tripsApi = {
       const normalized = (Array.isArray(trips) ? trips : [])
         .map((t: any) => ({ ...t, id: Number(t?.id) }))
         .filter((t: any) => Number.isFinite(t.id) && t.id !== 0);
-      const total = normalized.length;
+
+      // Enforce: drivers can only see their own trips (unless role can view all)
+      const currentUser = await authApi.getStoredUser().catch(() => null);
+      const roleHandler = currentUser?.roles?.length
+        ? RoleFactory.createFromUser({ roles: currentUser.roles })
+        : null;
+      const canViewAll = roleHandler?.canViewAllTrips?.() ?? false;
+      const scoped =
+        !canViewAll && currentUser?.id != null
+          ? normalized.filter((t: any) => String(t?.driver_id) === String(currentUser.id))
+          : normalized;
+
+      const total = scoped.length;
       const per_page = 15;
       const last_page = Math.ceil(total / per_page);
       const current_page = page || 1;
       const start = (current_page - 1) * per_page;
-      const paginatedTrips = normalized.slice(start, start + per_page);
+      const paginatedTrips = scoped.slice(start, start + per_page);
 
       return {
         trips: paginatedTrips as Trip[],
@@ -140,6 +154,23 @@ export const tripsApi = {
       if (!tripData) {
         throw new Error(`Trip with id ${id} not found`);
       }
+
+      // Enforce: drivers can only access their own trip details (unless role can view all)
+      const currentUser = await authApi.getStoredUser().catch(() => null);
+      if (!currentUser) {
+        throw new Error('Not authenticated');
+      }
+      const roleHandler = currentUser?.roles?.length
+        ? RoleFactory.createFromUser({ roles: currentUser.roles })
+        : null;
+      const canViewAll = roleHandler?.canViewAllTrips?.() ?? false;
+      if (!canViewAll) {
+        const tripDriverId = (tripData as any)?.driver_id ?? (tripData as any)?.driver?.id;
+        if (String(tripDriverId) !== String(currentUser.id)) {
+          throw new Error(`Trip with id ${id} not found`);
+        }
+      }
+
       return tripData as unknown as Trip;
     } catch (error: any) {
       if (__DEV__) console.error('Error fetching trip:', error);
@@ -151,8 +182,39 @@ export const tripsApi = {
     const isOffline = await checkInternetNow();
     if (isOffline) {
       await enqueueRequest({ method: 'POST', url: '/trips', body: data });
-      const tempTrip: any = { id: -Date.now(), ...data };
-      return { message: 'created_offline', trip: tempTrip } as unknown as CreateTripResponse;
+      // Apply locally immediately so the user sees the trip right away.
+      const created = await dataService.createTrip({
+        trip_number: data.trip_number,
+        vehicle_id: data.vehicle_id,
+        driver_id: data.driver_id,
+        a_code: data.a_code,
+        destination_from: data.destination_from,
+        destination_to: data.destination_to,
+        status: data.status || 'not_started',
+        mileage: data.mileage,
+        driver_description: data.driver_description,
+        admin_description: data.admin_description,
+        trip_date: data.trip_date,
+        invoice_number: data.invoice_number,
+        amount: data.amount,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as any);
+
+      if (data.stops && data.stops.length > 0) {
+        for (const stop of data.stops) {
+          await dataService.createTripStop({
+            trip_id: created.id,
+            destination: stop.destination,
+            stop_order: stop.stop_order,
+            notes: stop.notes,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      return { message: 'created_offline', trip: created as any } as unknown as CreateTripResponse;
     }
     try {
       const newTrip = await dataService.createTrip({
@@ -201,8 +263,9 @@ export const tripsApi = {
     const isOffline = await checkInternetNow();
     if (isOffline) {
       await enqueueRequest({ method: 'PUT', url: `/trips/${id}`, body: data });
-      const tempTrip: any = { id, ...data };
-      return { message: 'updated_offline', trip: tempTrip } as unknown as CreateTripResponse;
+      const updated = await dataService.updateTrip(id, data as any);
+      if (!updated) throw new Error(`Trip with id ${id} not found`);
+      return { message: 'updated_offline', trip: updated as any } as unknown as CreateTripResponse;
     }
     try {
       const updated = await dataService.updateTrip(id, data as any);
@@ -223,9 +286,20 @@ export const tripsApi = {
     const isOffline = await checkInternetNow();
     if (isOffline) {
       await enqueueRequest({ method: 'DELETE', url: `/trips/${id}` });
+      await dataService.deleteTrip(id);
       return;
     }
     try {
+      const currentUser = await authApi.getStoredUser().catch(() => null);
+      if (!currentUser) throw new Error('Not authenticated');
+      const roleHandler = currentUser?.roles?.length
+        ? RoleFactory.createFromUser({ roles: currentUser.roles })
+        : null;
+      const canDelete = roleHandler?.canDeleteTrip?.() ?? false;
+      if (!canDelete) {
+        throw new Error('Not authorized to delete trips');
+      }
+
       const success = await dataService.deleteTrip(id);
       if (!success) {
         throw new Error(`Trip with id ${id} not found`);
@@ -262,6 +336,24 @@ export const tripsApi = {
 
   updateStatus: async (id: number, status: UpdateStatusRequest): Promise<UpdateStatusResponse> => {
     try {
+      const currentUser = await authApi.getStoredUser().catch(() => null);
+      if (!currentUser) throw new Error('Not authenticated');
+
+      const roleHandler = currentUser?.roles?.length
+        ? RoleFactory.createFromUser({ roles: currentUser.roles })
+        : null;
+
+      const existing = await dataService.getTripById(id);
+      if (!existing) {
+        throw new Error(`Trip with id ${id} not found`);
+      }
+
+      const canUpdate =
+        roleHandler?.canUpdateTripStatus?.(currentUser.id, (existing as any).driver_id) ?? false;
+      if (!canUpdate) {
+        throw new Error('Not authorized to update this trip');
+      }
+
       if (__DEV__) {
         console.log('🔄 Updating trip status (local):', {
           tripId: id,
@@ -296,6 +388,21 @@ export const tripsApi = {
 
   uploadCMR: async (id: number, file: any): Promise<TripResponse> => {
     try {
+      const currentUser = await authApi.getStoredUser().catch(() => null);
+      if (!currentUser) throw new Error('Not authenticated');
+      const roleHandler = currentUser?.roles?.length
+        ? RoleFactory.createFromUser({ roles: currentUser.roles })
+        : null;
+      const existing = await dataService.getTripById(id);
+      if (!existing) {
+        throw new Error(`Trip with id ${id} not found`);
+      }
+      const canUpdate =
+        roleHandler?.canUpdateTripStatus?.(currentUser.id, (existing as any).driver_id) ?? false;
+      if (!canUpdate) {
+        throw new Error('Not authorized to upload CMR for this trip');
+      }
+
       if (__DEV__) {
         console.log('📤 Uploading CMR (local):', {
           tripId: id,

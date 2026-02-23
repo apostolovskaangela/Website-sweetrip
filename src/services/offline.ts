@@ -117,6 +117,11 @@ async function applyOfflineRequest(item: OfflineRequest) {
 
   if (item.method === 'POST' && url === '/trips') {
     const body = item.body ?? {};
+    // If already applied locally (e.g. created while offline), treat as success.
+    if (body?.trip_number) {
+      const existing = await dataService.getTripByNumber(String(body.trip_number));
+      if (existing) return;
+    }
     const created = await dataService.createTrip({
       trip_number: body.trip_number,
       vehicle_id: Number(body.vehicle_id),

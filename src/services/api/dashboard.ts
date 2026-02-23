@@ -1,4 +1,6 @@
 import * as dataService from '@/src/lib/sqlite/dataService';
+import { authApi } from './auth';
+import { RoleFactory } from '@/src/roles';
 
 // ------------------
 // Types
@@ -67,7 +69,7 @@ export interface DriverDashboardResponse {
 export const dashboardApi = {
   getDashboard: async (): Promise<DashboardResponse> => {
     try {
-      const trips = await dataService.getAllTrips();
+      let trips = await dataService.getAllTrips();
       const vehicles = await dataService.getAllVehicles();
       const drivers = await dataService.getDrivers();
       const users = await dataService.getAllUsers();
@@ -77,9 +79,21 @@ export const dashboardApi = {
 
       const isActive = (v: any) => v === true || v === 1 || v === '1';
 
+      // Enforce: drivers only see their own trips (unless role can view all)
+      const currentUser = await authApi.getStoredUser().catch(() => null);
+      const roleHandler = currentUser?.roles?.length
+        ? RoleFactory.createFromUser({ roles: currentUser.roles })
+        : null;
+      const canViewAll = roleHandler?.canViewAllTrips?.() ?? false;
+      if (!canViewAll && currentUser?.id != null) {
+        trips = trips.filter((t: any) => String((t as any)?.driver_id) === String(currentUser.id));
+      }
+
       const today = new Date().toISOString().split('T')[0];
       const activeTripCount = trips.filter(t => t.status === 'in_progress' || t.status === 'not_started').length;
       const tripsToday = trips.filter(t => t.trip_date === today);
+      const totalTrips = trips.length;
+      const completedTrips = trips.filter(t => t.status === 'completed').length;
 
       // Calculate last month's trips
       const now = new Date();
@@ -95,7 +109,7 @@ export const dashboardApi = {
           active_trips: activeTripCount,
           total_vehicles: vehicles.length,
           distance_today: tripsToday.reduce((sum, t) => sum + (t.mileage || 0), 0),
-          efficiency: vehicles.length > 0 ? (activeTripCount / vehicles.length) * 100 : 0,
+          efficiency: totalTrips > 0 ? (completedTrips / totalTrips) * 100 : 0,
           total_trips_last_month: tripsLastMonth.length,
           completed_trips_last_month: tripsLastMonth.filter(t => t.status === 'completed').length,
         },

@@ -33,4 +33,16 @@ export class AdminRoleHandler extends BaseRoleHandler {
   canViewVehicles(): boolean {
     return true;
   }
+
+  canViewTripFinancials(): boolean {
+    return true;
+  }
+
+  canViewTripNotes(): boolean {
+    return true;
+  }
+
+  canViewTripMileage(): boolean {
+    return true;
+  }
 }

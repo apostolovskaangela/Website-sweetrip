@@ -44,7 +44,7 @@ export const authApi = {
    */
   login: async (data: LoginRequest): Promise<LoginResponse> => {
     try {
-      const user = await dataService.getUserByEmail(data.email);
+      const user = await dataService.getUserByEmail(data.email.toLowerCase());
       if (!user) {
         throw new Error('Invalid email or password');
       }

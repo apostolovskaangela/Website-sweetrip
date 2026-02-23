@@ -33,4 +33,9 @@ export class DriverRoleHandler extends BaseRoleHandler {
   canViewAllTrips(): boolean {
     return false;
   }
+
+  canViewTripMileage(): boolean {
+    // Safe for drivers to see their own trip mileage
+    return true;
+  }
 }

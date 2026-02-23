@@ -22,6 +22,7 @@ import { VehicleCreatePage } from './pages/vehicles/VehicleCreatePage';
 import { VehicleDetailsPage } from './pages/vehicles/VehicleDetailsPage';
 import { VehicleEditPage } from './pages/vehicles/VehicleEditPage';
 import { OfflineQueuePage } from './pages/offline/OfflineQueuePage';
+import { AdminPage } from './pages/admin/AdminPage';
 
 function FullscreenLoader() {
   return (
@@ -102,6 +103,7 @@ export function WebApp() {
                 <Route path="vehicles/:id/edit" element={<VehicleEditPage />} />
 
                 <Route path="offline-queue" element={<OfflineQueuePage />} />
+                <Route path="admin" element={<AdminPage />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

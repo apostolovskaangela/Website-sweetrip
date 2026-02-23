@@ -16,6 +16,14 @@ export const queryKeys = {
     createData: () => [...queryKeys.trips.all, "createData"] as const,
   },
 
+  users: {
+    all: ["users"] as const,
+    lists: () => [...queryKeys.users.all, "list"] as const,
+    list: () => [...queryKeys.users.lists()] as const,
+    details: () => [...queryKeys.users.all, "detail"] as const,
+    detail: (id: number) => [...queryKeys.users.details(), id] as const,
+  },
+
   dashboard: {
     all: ["dashboard"] as const,
     main: () => [...queryKeys.dashboard.all, "main"] as const,

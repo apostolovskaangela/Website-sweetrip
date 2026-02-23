@@ -31,6 +31,14 @@ export interface IRoleHandler {
   canViewAllTrips(): boolean;
 
   canViewVehicles(): boolean;
+
+  /**
+   * Financial fields like invoice/amount should be restricted to non-drivers.
+   */
+  canViewTripFinancials(): boolean;
+  canViewTripNotes(): boolean;
+  canViewTripMileage(): boolean;
+
   
   /**
    * Get the role name

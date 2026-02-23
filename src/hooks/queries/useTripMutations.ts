@@ -81,7 +81,68 @@ export function useTripMutations() {
       id: number;
       status: { status: TripStatus };
     }) => tripsApi.updateStatus(id, status),
-    onSuccess: (_, { id }) => {
+    onMutate: async ({ id, status }) => {
+      const nextStatus = status.status;
+
+      await queryClient.cancelQueries({ queryKey: queryKeys.trips.detail(id) });
+      await queryClient.cancelQueries({ queryKey: queryKeys.trips.lists() });
+      await queryClient.cancelQueries({ queryKey: queryKeys.dashboard.main() });
+
+      const previousDetail = queryClient.getQueryData<Trip>(
+        queryKeys.trips.detail(id)
+      );
+      const previousList = queryClient.getQueryData<Trip[]>(
+        queryKeys.trips.list()
+      );
+      const previousDashboard = queryClient.getQueryData<any>(
+        queryKeys.dashboard.main()
+      );
+
+      queryClient.setQueryData<Trip>(queryKeys.trips.detail(id), (old) => {
+        if (!old) return old as any;
+        return {
+          ...old,
+          status: nextStatus,
+          status_label: nextStatus,
+        } as Trip;
+      });
+
+      queryClient.setQueryData<Trip[]>(queryKeys.trips.list(), (old) => {
+        if (!old) return old as any;
+        return old.map((t) =>
+          t.id === id
+            ? ({ ...t, status: nextStatus, status_label: nextStatus } as Trip)
+            : t
+        );
+      });
+
+      queryClient.setQueryData<any>(queryKeys.dashboard.main(), (old) => {
+        if (!old) return old;
+        const recent = Array.isArray(old.recent_trips) ? old.recent_trips : [];
+        return {
+          ...old,
+          recent_trips: recent.map((t: any) =>
+            Number(t?.id) === id
+              ? { ...t, status: nextStatus, status_label: nextStatus }
+              : t
+          ),
+        };
+      });
+
+      return { previousDetail, previousList, previousDashboard };
+    },
+    onError: (_err, { id }, ctx) => {
+      if (ctx?.previousDetail) {
+        queryClient.setQueryData(queryKeys.trips.detail(id), ctx.previousDetail);
+      }
+      if (ctx?.previousList) {
+        queryClient.setQueryData(queryKeys.trips.list(), ctx.previousList);
+      }
+      if (ctx?.previousDashboard) {
+        queryClient.setQueryData(queryKeys.dashboard.main(), ctx.previousDashboard);
+      }
+    },
+    onSettled: (_data, _err, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.main() });

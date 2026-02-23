@@ -39,6 +39,7 @@ export function TripCreatePage() {
   const [vehicles, setVehicles] = React.useState<{ id: number; registration_number: string; is_active: boolean }[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = React.useState<Partial<Record<keyof FormState, string>>>({});
 
   const [form, setForm] = React.useState<FormState>(() => ({
     trip_number: '',
@@ -85,12 +86,23 @@ export function TripCreatePage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
     try {
+      const nextFieldErrors: Partial<Record<keyof FormState, string>> = {};
+      if (!form.trip_number.trim()) nextFieldErrors.trip_number = 'Trip number is required';
+      if (!form.destination_from.trim()) nextFieldErrors.destination_from = 'From is required';
+      if (!form.destination_to.trim()) nextFieldErrors.destination_to = 'To is required';
       if (!form.vehicle_id || !form.driver_id) {
-        setError('Driver and vehicle are required');
+        if (!form.vehicle_id) nextFieldErrors.vehicle_id = 'Vehicle is required';
+        if (!form.driver_id) nextFieldErrors.driver_id = 'Driver is required';
+      }
+      if (Object.keys(nextFieldErrors).length) {
+        setFieldErrors(nextFieldErrors);
+        setError('Please fix the highlighted fields.');
         return;
       }
-      await createTrip({
+
+      const res = await createTrip({
         trip_number: form.trip_number,
         destination_from: form.destination_from,
         destination_to: form.destination_to,
@@ -105,7 +117,16 @@ export function TripCreatePage() {
         amount: form.amount ? Number(form.amount) : undefined,
         status: 'not_started',
       });
-      navigate('/app/trips', { replace: true });
+
+      const offline = res?.message === 'created_offline';
+      navigate('/app/trips', {
+        replace: true,
+        state: {
+          flash: offline
+            ? { type: 'info', message: 'You are offline. Trip was saved locally and queued in Offline Queue.' }
+            : { type: 'success', message: 'Trip created successfully.' },
+        },
+      });
     } catch (e: any) {
       setError(e?.message ?? 'Failed to create trip');
     }
@@ -142,9 +163,30 @@ export function TripCreatePage() {
       <Card variant="outlined">
         <CardContent>
           <Box component="form" onSubmit={onSubmit} sx={{ display: 'grid', gap: 2 }}>
-            <TextField label="Trip number" value={form.trip_number} onChange={(e) => setField('trip_number', e.target.value)} required />
-            <TextField label="From" value={form.destination_from} onChange={(e) => setField('destination_from', e.target.value)} required />
-            <TextField label="To" value={form.destination_to} onChange={(e) => setField('destination_to', e.target.value)} required />
+            <TextField
+              label="Trip number"
+              value={form.trip_number}
+              onChange={(e) => setField('trip_number', e.target.value)}
+              required
+              error={!!fieldErrors.trip_number}
+              helperText={fieldErrors.trip_number}
+            />
+            <TextField
+              label="From"
+              value={form.destination_from}
+              onChange={(e) => setField('destination_from', e.target.value)}
+              required
+              error={!!fieldErrors.destination_from}
+              helperText={fieldErrors.destination_from}
+            />
+            <TextField
+              label="To"
+              value={form.destination_to}
+              onChange={(e) => setField('destination_to', e.target.value)}
+              required
+              error={!!fieldErrors.destination_to}
+              helperText={fieldErrors.destination_to}
+            />
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <TextField label="A Code" value={form.a_code} onChange={(e) => setField('a_code', e.target.value)} />
@@ -173,6 +215,8 @@ export function TripCreatePage() {
               value={form.vehicle_id}
               onChange={(e) => setField('vehicle_id', Number(e.target.value))}
               required
+              error={!!fieldErrors.vehicle_id}
+              helperText={fieldErrors.vehicle_id}
             >
               <MenuItem value={0}>Select vehicle</MenuItem>
               {vehicles.map((v) => (
@@ -188,6 +232,8 @@ export function TripCreatePage() {
               value={form.driver_id}
               onChange={(e) => setField('driver_id', Number(e.target.value))}
               required
+              error={!!fieldErrors.driver_id}
+              helperText={fieldErrors.driver_id}
             >
               <MenuItem value={0}>Select driver</MenuItem>
               {drivers.map((d) => (

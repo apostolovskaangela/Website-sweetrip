@@ -1,17 +1,19 @@
 export async function isInternetReachable(timeoutMs = 3500): Promise<boolean> {
-  // React Native supports AbortController in modern runtimes (Expo SDK 50+).
+  // For web builds, avoid cross-origin checks (CORS can block them).
+  // Use a same-origin lightweight request instead.
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    // A small endpoint that returns HTTP 204 when reachable.
-    const res = await fetch("https://clients3.google.com/generate_204", {
-      method: "GET",
+    if (typeof window === 'undefined') return true;
+
+    // `/api/db.json` exists in this app and is same-origin in dev + Vercel.
+    const res = await fetch('/api/db.json', {
+      method: 'HEAD',
       signal: controller.signal,
-      // prevent caching if any platform caches this request
-      headers: { "Cache-Control": "no-cache" },
+      cache: 'no-store',
     });
-    return res.status === 204 || res.ok;
+    return res.ok;
   } catch {
     return false;
   } finally {
