@@ -69,15 +69,29 @@ export function DashboardPage() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: '1fr 1fr',
+            md: isDriver ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+          },
           gap: 2,
           mb: 2,
         }}
       >
-        <StatCard title="Distance Today" value={`${stats?.distance_today ?? 0} km`} icon={<AltRouteIcon color="primary" />} />
-        <StatCard title="Active Trips" value={String(stats?.active_trips ?? 0)} icon={<RouteIcon color="primary" />} />
+        {!isDriver && (
+          <StatCard
+            title="Distance Today"
+            value={`${stats?.distance_today ?? 0} km`}
+            icon={<AltRouteIcon color="primary" />}
+          />
+        )}
+        {!isDriver && (
+          <StatCard title="Active Trips" value={String(stats?.active_trips ?? 0)} icon={<RouteIcon color="primary" />} />
+        )}
         <StatCard title="Efficiency" value={`${(stats?.efficiency ?? 0).toFixed(2)}%`} icon={<TrendingUpIcon color="primary" />} />
+        {!isDriver && (
         <StatCard title="Total vehicles" value={String(stats?.total_vehicles ?? 0)} icon={<LocalShippingIcon color="primary" />} />
+        )}
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.35fr 1fr' }, gap: 2 }}>
