@@ -30,13 +30,48 @@ function getOrigin(req: any) {
   return host ? `${proto}://${host}` : '';
 }
 
-async function getKvClient(): Promise<null | { get: (k: string) => Promise<any>; set: (k: string, v: any) => Promise<any> }> {
-  // Lazy import so a bad KV config doesn't crash the function at import time.
-  try {
-    const mod: any = await import('@vercel/kv');
-    return mod?.kv ?? null;
-  } catch {
-    return null;
+function getUpstashConfig() {
+  const env = (globalThis as any)?.process?.env ?? {};
+  const url = env.KV_REST_API_URL;
+  const token = env.KV_REST_API_TOKEN;
+  if (!url || !token) {
+    throw new Error(
+      'Shared database is not configured. Ensure KV_REST_API_URL and KV_REST_API_TOKEN are set in Vercel environment variables.'
+    );
+  }
+  return { url, token };
+}
+
+async function upstashGet(key: string): Promise<string | null> {
+  const { url, token } = getUpstashConfig();
+  const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store' as any,
+  } as any);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Upstash GET failed (${res.status}): ${text || 'unknown error'}`);
+  }
+  const data: any = await res.json().catch(() => null);
+  return data?.result ?? null;
+}
+
+async function upstashSet(key: string, value: string): Promise<void> {
+  const { url, token } = getUpstashConfig();
+  // Put the value in the body to avoid URL length limits.
+  const res = await fetch(`${url}/set/${encodeURIComponent(key)}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: value,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Upstash SET failed (${res.status}): ${text || 'unknown error'}`);
+  }
+  const data: any = await res.json().catch(() => null);
+  if (data?.error) {
+    throw new Error(`Upstash SET error: ${String(data.error)}`);
   }
 }
 
@@ -68,16 +103,17 @@ async function readSeedDb(req: any) {
 }
 
 async function getOrSeedDb(req: any) {
-  const kv = await getKvClient();
-  if (!kv) {
-    // KV unavailable → fall back to seed (read-only/shared DB disabled)
-    return readSeedDb(req);
+  const existingRaw = await upstashGet(KV_KEY);
+  if (existingRaw) {
+    try {
+      const parsed = JSON.parse(existingRaw);
+      if (isValidDatabaseShape(parsed)) return normalizeDb(parsed);
+    } catch {
+      // fall through to reseed
+    }
   }
-
-  const existing = await kv.get(KV_KEY);
-  if (existing && isValidDatabaseShape(existing)) return normalizeDb(existing);
   const seed = await readSeedDb(req);
-  await kv.set(KV_KEY, seed);
+  await upstashSet(KV_KEY, JSON.stringify(seed));
   return seed;
 }
 
@@ -99,37 +135,21 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === 'PUT') {
-      const kv = await getKvClient();
-      if (!kv) {
-        res.status(503).json({
-          error:
-            'Shared database is not available (KV/Redis not configured). Add the Redis/KV integration in Vercel and redeploy.',
-        });
-        return;
-      }
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const db = body?.db ?? body;
       if (!isValidDatabaseShape(db)) {
         res.status(400).json({ error: 'Invalid database payload' });
         return;
       }
-      await kv.set(KV_KEY, normalizeDb(db));
+      await upstashSet(KV_KEY, JSON.stringify(normalizeDb(db)));
       res.status(200).json({ ok: true });
       return;
     }
 
     if (req.method === 'POST') {
-      const kv = await getKvClient();
-      if (!kv) {
-        res.status(503).json({
-          error:
-            'Shared database is not available (KV/Redis not configured). Add the Redis/KV integration in Vercel and redeploy.',
-        });
-        return;
-      }
       // reset
       const seed = await readSeedDb(req);
-      await kv.set(KV_KEY, seed);
+      await upstashSet(KV_KEY, JSON.stringify(seed));
       res.status(200).json({ ok: true });
       return;
     }
