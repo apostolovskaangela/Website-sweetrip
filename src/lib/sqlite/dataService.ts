@@ -16,6 +16,7 @@ interface Database {
 let dbData: Database | null = null;
 let nextIds: { [key: string]: number } = {};
 const STORAGE_KEY = 'SWEETTRIP_LOCAL_DB_V4';
+const REMOTE_DB_URL = '/api/db';
 
 function hasLocalStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -90,11 +91,29 @@ function sanitizeIds(db: Database) {
 }
 
 function persistDb() {
-  if (!hasLocalStorage() || !dbData) return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dbData));
-  } catch {
-    // ignore quota / disabled storage
+  if (!dbData) return;
+
+  // Always keep a local cache for faster loads / offline fallback.
+  if (hasLocalStorage()) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dbData));
+    } catch {
+      // ignore quota / disabled storage
+    }
+  }
+
+  // In production we persist to a shared server DB so other devices see changes.
+  // Failures are ignored to keep the app usable offline.
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD) {
+    try {
+      fetch(REMOTE_DB_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ db: dbData }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
   }
 }
 
@@ -126,29 +145,36 @@ function isValidDatabaseShape(value: any): value is Database {
 export async function initializeLocalDatabase(): Promise<void> {
   try {
     const stored = tryLoadFromStorage();
-    if (stored && isValidDatabaseShape(stored)) {
+
+    // PROD: prefer shared remote DB; fallback to local cache / static seed.
+    const isProd = typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD;
+    if (isProd) {
+      try {
+        const remote = await fetch(REMOTE_DB_URL);
+        if (remote.ok) {
+          const data = await remote.json();
+          if (isValidDatabaseShape(data)) {
+            dbData = data;
+          }
+        }
+      } catch {
+        // ignore; will fall back below
+      }
+    }
+
+    if (!dbData && stored && isValidDatabaseShape(stored)) {
       dbData = stored;
-    } else if (stored && hasLocalStorage()) {
-      // Corrupted/partial cached DB from an older version → reseed
+    } else if (!dbData && stored && hasLocalStorage()) {
+      // Corrupted/partial cached DB from an older version → clear cache
       try {
         window.localStorage.removeItem(STORAGE_KEY);
       } catch {
         // ignore
       }
-    } else {
-      // Seed from static file
-      const response = await fetch('/api/db.json');
-      if (!response.ok) {
-        throw new Error(`Failed to load db.json: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      dbData = data;
-      persistDb();
     }
 
     if (!dbData) {
-      // If we removed a bad cached DB above, seed now
+      // Seed from static file
       const response = await fetch('/api/db.json');
       if (!response.ok) {
         throw new Error(`Failed to load db.json: ${response.statusText}`);
