@@ -150,11 +150,14 @@ export async function initializeLocalDatabase(): Promise<void> {
     const isProd = typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD;
     if (isProd) {
       try {
-        const remote = await fetch(REMOTE_DB_URL);
+        const remote = await fetch(REMOTE_DB_URL, { cache: 'no-store' });
         if (remote.ok) {
-          const data = await remote.json();
-          if (isValidDatabaseShape(data)) {
-            dbData = data;
+          const ct = remote.headers.get('content-type') ?? '';
+          if (ct.includes('application/json')) {
+            const data = await remote.json();
+            if (isValidDatabaseShape(data)) {
+              dbData = data;
+            }
           }
         }
       } catch {

@@ -7,8 +7,11 @@ export async function isInternetReachable(timeoutMs = 3500): Promise<boolean> {
   try {
     if (typeof window === 'undefined') return true;
 
-    // `/api/db.json` exists in this app and is same-origin in dev + Vercel.
-    const res = await fetch('/api/db.json', {
+    const isProd = typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD;
+    const url = isProd ? '/api/db' : '/api/db.json';
+
+    // same-origin lightweight request
+    const res = await fetch(url, {
       method: 'HEAD',
       signal: controller.signal,
       cache: 'no-store',
