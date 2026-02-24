@@ -8,9 +8,22 @@ function isValidDatabaseShape(value: any) {
     Array.isArray(value.users) &&
     Array.isArray(value.vehicles) &&
     Array.isArray(value.trips) &&
-    Array.isArray(value.trip_stops) &&
-    Array.isArray(value.roles)
+    // optional in seed; we normalize to []
+    (value.trip_stops == null || Array.isArray(value.trip_stops)) &&
+    // optional in seed; we normalize to []
+    (value.roles == null || Array.isArray(value.roles))
   );
+}
+
+function normalizeDb(value: any) {
+  const v = value && typeof value === 'object' ? value : {};
+  return {
+    users: Array.isArray(v.users) ? v.users : [],
+    vehicles: Array.isArray(v.vehicles) ? v.vehicles : [],
+    trips: Array.isArray(v.trips) ? v.trips : [],
+    trip_stops: Array.isArray(v.trip_stops) ? v.trip_stops : [],
+    roles: Array.isArray(v.roles) ? v.roles : [],
+  };
 }
 
 function getOrigin(req: any) {
@@ -32,12 +45,12 @@ async function readSeedDb(req: any) {
   if (!isValidDatabaseShape(data)) {
     throw new Error('Seed db.json has invalid shape');
   }
-  return data;
+  return normalizeDb(data);
 }
 
 async function getOrSeedDb(req: any) {
   const existing = await kv.get(KV_KEY);
-  if (existing && isValidDatabaseShape(existing)) return existing;
+  if (existing && isValidDatabaseShape(existing)) return normalizeDb(existing);
   const seed = await readSeedDb(req);
   await kv.set(KV_KEY, seed);
   return seed;
@@ -67,7 +80,7 @@ export default async function handler(req: any, res: any) {
         res.status(400).json({ error: 'Invalid database payload' });
         return;
       }
-      await kv.set(KV_KEY, db);
+      await kv.set(KV_KEY, normalizeDb(db));
       res.status(200).json({ ok: true });
       return;
     }
