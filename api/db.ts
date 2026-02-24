@@ -1,6 +1,4 @@
 import { kv } from '@vercel/kv';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 
 const KV_KEY = 'sweetrip:db:v1';
 
@@ -15,28 +13,48 @@ function isValidDatabaseShape(value: any) {
   );
 }
 
-async function readSeedDb() {
-  const seedPath = path.join(process.cwd(), 'public', 'api', 'db.json');
-  const raw = await readFile(seedPath, 'utf8');
-  const data = JSON.parse(raw);
+function getOrigin(req: any) {
+  const proto = (req?.headers?.['x-forwarded-proto'] ?? 'https') as string;
+  const host = (req?.headers?.host ?? '').toString();
+  return host ? `${proto}://${host}` : '';
+}
+
+async function readSeedDb(req: any) {
+  // On Vercel, serverless functions do not reliably have access to `/public` on disk.
+  // Fetch the public seed via HTTP instead.
+  const origin = getOrigin(req);
+  const url = origin ? `${origin}/api/db.json` : '/api/db.json';
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error(`Failed to load seed db.json: ${res.status}`);
+  }
+  const data = await res.json();
   if (!isValidDatabaseShape(data)) {
     throw new Error('Seed db.json has invalid shape');
   }
   return data;
 }
 
-async function getOrSeedDb() {
+async function getOrSeedDb(req: any) {
   const existing = await kv.get(KV_KEY);
   if (existing && isValidDatabaseShape(existing)) return existing;
-  const seed = await readSeedDb();
+  const seed = await readSeedDb(req);
   await kv.set(KV_KEY, seed);
   return seed;
 }
 
 export default async function handler(req: any, res: any) {
   try {
+    if (req.method === 'HEAD') {
+      // Used by connectivity checks; keep it lightweight.
+      await getOrSeedDb(req);
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).end();
+      return;
+    }
+
     if (req.method === 'GET') {
-      const db = await getOrSeedDb();
+      const db = await getOrSeedDb(req);
       res.setHeader('Cache-Control', 'no-store');
       res.status(200).json(db);
       return;
@@ -56,7 +74,7 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === 'POST') {
       // reset
-      const seed = await readSeedDb();
+      const seed = await readSeedDb(req);
       await kv.set(KV_KEY, seed);
       res.status(200).json({ ok: true });
       return;
