@@ -1,5 +1,3 @@
-import { kv } from '@vercel/kv';
-
 const KV_KEY = 'sweetrip:db:v1';
 
 function isValidDatabaseShape(value: any) {
@@ -32,16 +30,37 @@ function getOrigin(req: any) {
   return host ? `${proto}://${host}` : '';
 }
 
+async function getKvClient(): Promise<null | { get: (k: string) => Promise<any>; set: (k: string, v: any) => Promise<any> }> {
+  // Lazy import so a bad KV config doesn't crash the function at import time.
+  try {
+    const mod: any = await import('@vercel/kv');
+    return mod?.kv ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function readSeedDb(req: any) {
   // On Vercel, serverless functions do not reliably have access to `/public` on disk.
   // Fetch the public seed via HTTP instead.
   const origin = getOrigin(req);
-  const url = origin ? `${origin}/api/db.json` : '/api/db.json';
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error(`Failed to load seed db.json: ${res.status}`);
+  const candidates = origin
+    ? [`${origin}/api/db.json`, `${origin}/app/api/db.json`]
+    : ['/api/db.json', '/app/api/db.json'];
+
+  let data: any = null;
+  let lastStatus: number | null = null;
+  for (const url of candidates) {
+    const res = await fetch(url, { cache: 'no-store' });
+    lastStatus = res.status;
+    if (!res.ok) continue;
+    data = await res.json();
+    break;
   }
-  const data = await res.json();
+
+  if (!data) {
+    throw new Error(`Failed to load seed db.json: ${lastStatus ?? 'unknown'}`);
+  }
   if (!isValidDatabaseShape(data)) {
     throw new Error('Seed db.json has invalid shape');
   }
@@ -49,6 +68,12 @@ async function readSeedDb(req: any) {
 }
 
 async function getOrSeedDb(req: any) {
+  const kv = await getKvClient();
+  if (!kv) {
+    // KV unavailable → fall back to seed (read-only/shared DB disabled)
+    return readSeedDb(req);
+  }
+
   const existing = await kv.get(KV_KEY);
   if (existing && isValidDatabaseShape(existing)) return normalizeDb(existing);
   const seed = await readSeedDb(req);
@@ -74,6 +99,14 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === 'PUT') {
+      const kv = await getKvClient();
+      if (!kv) {
+        res.status(503).json({
+          error:
+            'Shared database is not available (KV/Redis not configured). Add the Redis/KV integration in Vercel and redeploy.',
+        });
+        return;
+      }
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const db = body?.db ?? body;
       if (!isValidDatabaseShape(db)) {
@@ -86,6 +119,14 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === 'POST') {
+      const kv = await getKvClient();
+      if (!kv) {
+        res.status(503).json({
+          error:
+            'Shared database is not available (KV/Redis not configured). Add the Redis/KV integration in Vercel and redeploy.',
+        });
+        return;
+      }
       // reset
       const seed = await readSeedDb(req);
       await kv.set(KV_KEY, seed);
