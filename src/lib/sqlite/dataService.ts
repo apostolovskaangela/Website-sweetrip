@@ -16,7 +16,8 @@ interface Database {
 let dbData: Database | null = null;
 let nextIds: { [key: string]: number } = {};
 const STORAGE_KEY = 'SWEETTRIP_LOCAL_DB_V4';
-const REMOTE_DB_URL = '/api/db';
+// Relative URL so it works both at `/` and `/app/*` deployments.
+const REMOTE_DB_URL = 'api/db';
 
 function hasLocalStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
