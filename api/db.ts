@@ -1,3 +1,5 @@
+import { kv } from '@vercel/kv';
+
 const KV_KEY = 'sweetrip:db:v1';
 
 function isValidDatabaseShape(value: any) {
@@ -30,49 +32,12 @@ function getOrigin(req: any) {
   return host ? `${proto}://${host}` : '';
 }
 
-function getUpstashConfig() {
-  const env = (globalThis as any)?.process?.env ?? {};
-  const url = env.KV_REST_API_URL;
-  const token = env.KV_REST_API_TOKEN;
-  if (!url || !token) {
-    throw new Error(
-      'Shared database is not configured. Ensure KV_REST_API_URL and KV_REST_API_TOKEN are set in Vercel environment variables.'
-    );
-  }
-  return { url, token };
+async function kvGetDb(): Promise<any | null> {
+  return kv.get(KV_KEY);
 }
 
-async function upstashGet(key: string): Promise<string | null> {
-  const { url, token } = getUpstashConfig();
-  const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
-    method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store' as any,
-  } as any);
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Upstash GET failed (${res.status}): ${text || 'unknown error'}`);
-  }
-  const data: any = await res.json().catch(() => null);
-  return data?.result ?? null;
-}
-
-async function upstashSet(key: string, value: string): Promise<void> {
-  const { url, token } = getUpstashConfig();
-  // Put the value in the body to avoid URL length limits.
-  const res = await fetch(`${url}/set/${encodeURIComponent(key)}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: value,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Upstash SET failed (${res.status}): ${text || 'unknown error'}`);
-  }
-  const data: any = await res.json().catch(() => null);
-  if (data?.error) {
-    throw new Error(`Upstash SET error: ${String(data.error)}`);
-  }
+async function kvSetDb(db: any): Promise<void> {
+  await kv.set(KV_KEY, db);
 }
 
 async function readSeedDb(req: any) {
@@ -103,17 +68,22 @@ async function readSeedDb(req: any) {
 }
 
 async function getOrSeedDb(req: any) {
-  const existingRaw = await upstashGet(KV_KEY);
-  if (existingRaw) {
-    try {
-      const parsed = JSON.parse(existingRaw);
-      if (isValidDatabaseShape(parsed)) return normalizeDb(parsed);
-    } catch {
-      // fall through to reseed
+  const existing = await kvGetDb();
+  if (existing) {
+    // Support both JSON-string values (older versions) and structured JSON values.
+    if (typeof existing === 'string') {
+      try {
+        const parsed = JSON.parse(existing);
+        if (isValidDatabaseShape(parsed)) return normalizeDb(parsed);
+      } catch {
+        // fall through to reseed
+      }
+    } else if (isValidDatabaseShape(existing)) {
+      return normalizeDb(existing);
     }
   }
   const seed = await readSeedDb(req);
-  await upstashSet(KV_KEY, JSON.stringify(seed));
+  await kvSetDb(seed);
   return seed;
 }
 
@@ -141,7 +111,7 @@ export default async function handler(req: any, res: any) {
         res.status(400).json({ error: 'Invalid database payload' });
         return;
       }
-      await upstashSet(KV_KEY, JSON.stringify(normalizeDb(db)));
+      await kvSetDb(normalizeDb(db));
       res.status(200).json({ ok: true });
       return;
     }
@@ -149,7 +119,7 @@ export default async function handler(req: any, res: any) {
     if (req.method === 'POST') {
       // reset
       const seed = await readSeedDb(req);
-      await upstashSet(KV_KEY, JSON.stringify(seed));
+      await kvSetDb(seed);
       res.status(200).json({ ok: true });
       return;
     }

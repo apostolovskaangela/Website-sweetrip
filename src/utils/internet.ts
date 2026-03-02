@@ -8,16 +8,19 @@ export async function isInternetReachable(timeoutMs = 3500): Promise<boolean> {
     if (typeof window === 'undefined') return true;
 
     const isProd = typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD;
-    // Relative in prod so it works when app is served under `/app/*`
-    const url = isProd ? 'api/db' : '/api/db.json';
+    // Prefer the shared DB endpoint when available.
+    const urls = isProd ? ['/api/db'] : ['/api/db', '/api/db.json'];
 
-    // same-origin lightweight request
-    const res = await fetch(url, {
-      method: 'HEAD',
-      signal: controller.signal,
-      cache: 'no-store',
-    });
-    return res.ok;
+    for (const url of urls) {
+      // same-origin lightweight request
+      const res = await fetch(url, {
+        method: 'HEAD',
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      if (res.ok) return true;
+    }
+    return false;
   } catch {
     return false;
   } finally {

@@ -17,7 +17,7 @@ let dbData: Database | null = null;
 let nextIds: { [key: string]: number } = {};
 const STORAGE_KEY = 'SWEETTRIP_LOCAL_DB_V4';
 // Relative URL so it works both at `/` and `/app/*` deployments.
-const REMOTE_DB_URL = 'api/db';
+const REMOTE_DB_URL = '/api/db';
 
 function hasLocalStorage() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -103,18 +103,16 @@ function persistDb() {
     }
   }
 
-  // In production we persist to a shared server DB so other devices see changes.
-  // Failures are ignored to keep the app usable offline.
-  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD) {
-    try {
-      fetch(REMOTE_DB_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ db: dbData }),
-      }).catch(() => {});
-    } catch {
-      // ignore
-    }
+  // Persist to a shared server DB so other devices see changes.
+  // If the API isn't available (e.g. local dev), failures are ignored to keep the app usable offline.
+  try {
+    fetch(REMOTE_DB_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ db: dbData }),
+    }).catch(() => {});
+  } catch {
+    // ignore
   }
 }
 
@@ -147,23 +145,20 @@ export async function initializeLocalDatabase(): Promise<void> {
   try {
     const stored = tryLoadFromStorage();
 
-    // PROD: prefer shared remote DB; fallback to local cache / static seed.
-    const isProd = typeof import.meta !== 'undefined' && (import.meta as any).env?.PROD;
-    if (isProd) {
-      try {
-        const remote = await fetch(REMOTE_DB_URL, { cache: 'no-store' });
-        if (remote.ok) {
-          const ct = remote.headers.get('content-type') ?? '';
-          if (ct.includes('application/json')) {
-            const data = await remote.json();
-            if (isValidDatabaseShape(data)) {
-              dbData = data;
-            }
+    // Prefer shared remote DB; fallback to local cache / static seed.
+    try {
+      const remote = await fetch(REMOTE_DB_URL, { cache: 'no-store' });
+      if (remote.ok) {
+        const ct = remote.headers.get('content-type') ?? '';
+        if (ct.includes('application/json')) {
+          const data = await remote.json();
+          if (isValidDatabaseShape(data)) {
+            dbData = data;
           }
         }
-      } catch {
-        // ignore; will fall back below
       }
+    } catch {
+      // ignore; will fall back below
     }
 
     if (!dbData && stored && isValidDatabaseShape(stored)) {
