@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/db.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "routes": [
     { "src": "/app/api/(.*)", "dest": "/api/$1" },
     { "handle": "filesystem" },
