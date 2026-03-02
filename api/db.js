@@ -1,32 +1,27 @@
 const KV_KEY = 'sweetrip:db:v1';
 
-let kvClient: any | null = null;
+let kvClient = null;
 async function getKv() {
   if (kvClient) return kvClient;
-  // Vercel's plain serverless functions are often executed as CommonJS.
-  // Using dynamic import keeps this file compatible without requiring "type":"module".
-  const mod: any = await import('@vercel/kv');
-  kvClient = mod?.kv;
-  if (!kvClient) {
-    throw new Error('Failed to initialize Vercel KV client');
-  }
+  // Works in CommonJS and with ESM-only dependencies.
+  const mod = await import('@vercel/kv');
+  kvClient = mod && mod.kv;
+  if (!kvClient) throw new Error('Failed to initialize Vercel KV client');
   return kvClient;
 }
 
-function isValidDatabaseShape(value: any) {
+function isValidDatabaseShape(value) {
   return (
     value &&
     Array.isArray(value.users) &&
     Array.isArray(value.vehicles) &&
     Array.isArray(value.trips) &&
-    // optional in seed; we normalize to []
     (value.trip_stops == null || Array.isArray(value.trip_stops)) &&
-    // optional in seed; we normalize to []
     (value.roles == null || Array.isArray(value.roles))
   );
 }
 
-function normalizeDb(value: any) {
+function normalizeDb(value) {
   const v = value && typeof value === 'object' ? value : {};
   return {
     users: Array.isArray(v.users) ? v.users : [],
@@ -37,53 +32,45 @@ function normalizeDb(value: any) {
   };
 }
 
-function getHeader(req: any, name: string): string | null {
-  const headers = req?.headers;
+function getHeader(req, name) {
+  const headers = req && req.headers;
   if (!headers) return null;
-
-  // Edge-like: Headers instance
-  if (typeof headers.get === 'function') {
-    return headers.get(name);
-  }
-
-  // Node-like: plain object
-  const key = name.toLowerCase();
-  const value = (headers as any)[name] ?? (headers as any)[key];
+  if (typeof headers.get === 'function') return headers.get(name);
+  const key = String(name).toLowerCase();
+  const value = headers[name] ?? headers[key];
   return value != null ? String(value) : null;
 }
 
-function getOrigin(req: any) {
+function getOrigin(req) {
   const proto = getHeader(req, 'x-forwarded-proto') ?? 'https';
+  const env = (globalThis && globalThis.process && globalThis.process.env) ? globalThis.process.env : {};
   const host =
     getHeader(req, 'x-forwarded-host') ??
     getHeader(req, 'host') ??
-    // Vercel provides this automatically (no protocol)
-    ((globalThis as any)?.process?.env?.VERCEL_URL ? String((globalThis as any).process.env.VERCEL_URL) : null) ??
+    (env.VERCEL_URL ? String(env.VERCEL_URL) : null) ??
     getHeader(req, 'x-vercel-deployment-url') ??
     '';
 
   if (!host) return '';
-  const normalizedHost = host.startsWith('http://') || host.startsWith('https://') ? host : `${proto}://${host}`;
+  const normalized = host.startsWith('http://') || host.startsWith('https://') ? host : `${proto}://${host}`;
   try {
-    return new URL(normalizedHost).origin;
+    return new URL(normalized).origin;
   } catch {
     return '';
   }
 }
 
-async function kvGetDb(): Promise<any | null> {
+async function kvGetDb() {
   const kv = await getKv();
   return kv.get(KV_KEY);
 }
 
-async function kvSetDb(db: any): Promise<void> {
+async function kvSetDb(db) {
   const kv = await getKv();
   await kv.set(KV_KEY, db);
 }
 
-async function readSeedDb(req: any) {
-  // On Vercel, serverless functions do not reliably have access to `/public` on disk.
-  // Fetch the public seed via HTTP instead.
+async function readSeedDb(req) {
   const origin = getOrigin(req);
   if (!origin) {
     throw new Error(
@@ -93,8 +80,8 @@ async function readSeedDb(req: any) {
 
   const candidates = [`${origin}/api/db.json`, `${origin}/app/api/db.json`];
 
-  let data: any = null;
-  let lastStatus: number | null = null;
+  let data = null;
+  let lastStatus = null;
   for (const url of candidates) {
     const res = await fetch(url, { cache: 'no-store' });
     lastStatus = res.status;
@@ -103,39 +90,34 @@ async function readSeedDb(req: any) {
     break;
   }
 
-  if (!data) {
-    throw new Error(`Failed to load seed db.json: ${lastStatus ?? 'unknown'}`);
-  }
-  if (!isValidDatabaseShape(data)) {
-    throw new Error('Seed db.json has invalid shape');
-  }
+  if (!data) throw new Error(`Failed to load seed db.json: ${lastStatus ?? 'unknown'}`);
+  if (!isValidDatabaseShape(data)) throw new Error('Seed db.json has invalid shape');
   return normalizeDb(data);
 }
 
-async function getOrSeedDb(req: any) {
+async function getOrSeedDb(req) {
   const existing = await kvGetDb();
   if (existing) {
-    // Support both JSON-string values (older versions) and structured JSON values.
     if (typeof existing === 'string') {
       try {
         const parsed = JSON.parse(existing);
         if (isValidDatabaseShape(parsed)) return normalizeDb(parsed);
       } catch {
-        // fall through to reseed
+        // fall through
       }
     } else if (isValidDatabaseShape(existing)) {
       return normalizeDb(existing);
     }
   }
+
   const seed = await readSeedDb(req);
   await kvSetDb(seed);
   return seed;
 }
 
-export default async function handler(req: any, res: any) {
+module.exports = async function handler(req, res) {
   try {
     if (req.method === 'HEAD') {
-      // Used by connectivity checks; keep it lightweight.
       await getOrSeedDb(req);
       res.setHeader('Cache-Control', 'no-store');
       res.status(200).end();
@@ -151,7 +133,7 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === 'PUT') {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const db = body?.db ?? body;
+      const db = (body && body.db) ? body.db : body;
       if (!isValidDatabaseShape(db)) {
         res.status(400).json({ error: 'Invalid database payload' });
         return;
@@ -162,7 +144,6 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === 'POST') {
-      // reset
       const seed = await readSeedDb(req);
       await kvSetDb(seed);
       res.status(200).json({ ok: true });
@@ -170,17 +151,9 @@ export default async function handler(req: any, res: any) {
     }
 
     res.status(405).json({ error: 'Method not allowed' });
-  } catch (e: any) {
-    const msg = e?.message ?? 'Server error';
-    // If KV isn't configured, give a clearer hint.
-    if (typeof msg === 'string' && (msg.includes('KV_') || msg.toLowerCase().includes('vercel kv') || msg.toLowerCase().includes('upstash'))) {
-      res.status(500).json({
-        error:
-          'Shared database is not configured. Add a Redis/KV integration in Vercel and ensure KV_REST_API_URL and KV_REST_API_TOKEN are set.',
-      });
-      return;
-    }
+  } catch (e) {
+    const msg = e && e.message ? e.message : 'Server error';
     res.status(500).json({ error: msg });
   }
-}
+};
 
