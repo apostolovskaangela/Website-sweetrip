@@ -26,10 +26,38 @@ function normalizeDb(value: any) {
   };
 }
 
+function getHeader(req: any, name: string): string | null {
+  const headers = req?.headers;
+  if (!headers) return null;
+
+  // Edge-like: Headers instance
+  if (typeof headers.get === 'function') {
+    return headers.get(name);
+  }
+
+  // Node-like: plain object
+  const key = name.toLowerCase();
+  const value = (headers as any)[name] ?? (headers as any)[key];
+  return value != null ? String(value) : null;
+}
+
 function getOrigin(req: any) {
-  const proto = (req?.headers?.['x-forwarded-proto'] ?? 'https') as string;
-  const host = (req?.headers?.host ?? '').toString();
-  return host ? `${proto}://${host}` : '';
+  const proto = getHeader(req, 'x-forwarded-proto') ?? 'https';
+  const host =
+    getHeader(req, 'x-forwarded-host') ??
+    getHeader(req, 'host') ??
+    // Vercel provides this automatically (no protocol)
+    ((globalThis as any)?.process?.env?.VERCEL_URL ? String((globalThis as any).process.env.VERCEL_URL) : null) ??
+    getHeader(req, 'x-vercel-deployment-url') ??
+    '';
+
+  if (!host) return '';
+  const normalizedHost = host.startsWith('http://') || host.startsWith('https://') ? host : `${proto}://${host}`;
+  try {
+    return new URL(normalizedHost).origin;
+  } catch {
+    return '';
+  }
 }
 
 async function kvGetDb(): Promise<any | null> {
@@ -44,9 +72,13 @@ async function readSeedDb(req: any) {
   // On Vercel, serverless functions do not reliably have access to `/public` on disk.
   // Fetch the public seed via HTTP instead.
   const origin = getOrigin(req);
-  const candidates = origin
-    ? [`${origin}/api/db.json`, `${origin}/app/api/db.json`]
-    : ['/api/db.json', '/app/api/db.json'];
+  if (!origin) {
+    throw new Error(
+      'Failed to determine request origin to load seed db.json. (Missing Host/Forwarded headers and VERCEL_URL.)'
+    );
+  }
+
+  const candidates = [`${origin}/api/db.json`, `${origin}/app/api/db.json`];
 
   let data: any = null;
   let lastStatus: number | null = null;
