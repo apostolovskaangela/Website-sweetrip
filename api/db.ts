@@ -1,6 +1,17 @@
-import { kv } from '@vercel/kv';
-
 const KV_KEY = 'sweetrip:db:v1';
+
+let kvClient: any | null = null;
+async function getKv() {
+  if (kvClient) return kvClient;
+  // Vercel's plain serverless functions are often executed as CommonJS.
+  // Using dynamic import keeps this file compatible without requiring "type":"module".
+  const mod: any = await import('@vercel/kv');
+  kvClient = mod?.kv;
+  if (!kvClient) {
+    throw new Error('Failed to initialize Vercel KV client');
+  }
+  return kvClient;
+}
 
 function isValidDatabaseShape(value: any) {
   return (
@@ -61,10 +72,12 @@ function getOrigin(req: any) {
 }
 
 async function kvGetDb(): Promise<any | null> {
+  const kv = await getKv();
   return kv.get(KV_KEY);
 }
 
 async function kvSetDb(db: any): Promise<void> {
+  const kv = await getKv();
   await kv.set(KV_KEY, db);
 }
 
